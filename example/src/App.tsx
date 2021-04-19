@@ -1,25 +1,17 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { Admin, ListGuesser, Resource } from "react-admin";
+import "./App.css";
+import odataProvider from "ra-data-odata-server";
+
+const Northwind = "https://services.odata.org/v4/Northwind/Northwind.svc/";
+const ODataSample = "https://services.odata.org/v4/OData/OData.svc/";
+
+const dataProvider = odataProvider(ODataSample);
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Admin dataProvider={dataProvider}>
+      <Resource name="Products" list={ListGuesser} />
+    </Admin>
   );
 }
 
