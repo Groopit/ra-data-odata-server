@@ -1,0 +1,24 @@
+{
+  "name": "ra-data-odata-server",
+  "version": "1.0.0",
+  "description": "OData Server data provider for react-admin",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "odata",
+    "react-admin"
+  ],
+  "author": "John Vert",
+  "license": "MIT",
+  "devDependencies": {
+    "@tsconfig/node10": "^1.0.7",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "eslint": "^7.24.0"
+  },
+  "dependencies": {
+    "odata-client": "^0.6.14"
+  }
+}
