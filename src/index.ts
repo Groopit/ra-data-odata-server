@@ -1,4 +1,4 @@
-import { CreateParams, DataProvider, GetListParams, HttpError, Identifier } from "react-admin";
+import { CreateParams, DataProvider, GetListParams, HttpError, Identifier } from "ra-core";
 import odata from "odata-client";
 
 function get_resource_id(resource: string, id: Identifier)
@@ -6,7 +6,7 @@ function get_resource_id(resource: string, id: Identifier)
     return (resource !== "groups") ? id : odata.identifier(id)
 }
 
-function getresource(apiUrl: String, resource: string, id: Identifier) {
+function getresource(apiUrl: string, resource: string, id: Identifier) {
     const o = odata({ service: apiUrl });
     return o.resource(resource, get_resource_id(resource, id));
 }
@@ -33,7 +33,7 @@ interface CreateRelatedParams extends CreateParams
 }
 
 const ra_data_odata_server = (
-    apiUrl: String,
+    apiUrl: string,
     options: () => Promise<any> = () => Promise.resolve()
 ): DataProvider => ({
     getList: async (resource, params: GetRelatedParams) => {
@@ -56,7 +56,7 @@ const ra_data_odata_server = (
             .skip((page - 1) * perPage)
             .top(perPage);
 
-        for (var filterName in params.filter) {
+        for (const filterName in params.filter) {
             o = o.filter(
                 `Contains(${filterName},'${params.filter[filterName]}')`
             );
@@ -197,7 +197,7 @@ const ra_data_odata_server = (
         Promise.reject(new Error("not implemented")),
 
     create: async (resource, params: CreateRelatedParams) => {
-        let o =
+        const o =
             params.related && params.id
                 ? getresource(apiUrl, resource, params.id).resource(
                       params.related
