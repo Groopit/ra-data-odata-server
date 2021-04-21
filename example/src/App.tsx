@@ -1,17 +1,31 @@
-import { Admin, ListGuesser, Resource } from "react-admin";
+import {
+  Admin,
+  DataProvider,
+  ListGuesser,
+  Resource,
+  Loading,
+} from "react-admin";
 import "./App.css";
 import odataProvider from "ra-data-odata-server";
+import { useEffect, useState } from "react";
 
 const Northwind = "https://services.odata.org/v4/Northwind/Northwind.svc/";
-const ODataSample = "https://services.odata.org/v4/OData/OData.svc/";
+// const ODataSample = "https://services.odata.org/v4/OData/OData.svc/";
 
-const dataProvider = odataProvider(ODataSample);
+// odataProvider(ODataSample).then((p) => (dataProvider = p));
 
 function App() {
-  return (
+  const [dataProvider, setDataProvider] = useState<DataProvider>();
+  useEffect(() => {
+    odataProvider(Northwind).then((p) => setDataProvider(p));
+    return () => {};
+  }, []);
+  return dataProvider ? (
     <Admin dataProvider={dataProvider}>
       <Resource name="Products" list={ListGuesser} />
     </Admin>
+  ) : (
+    <Loading></Loading>
   );
 }
 
