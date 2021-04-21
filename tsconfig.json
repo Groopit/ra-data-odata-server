@@ -1,10 +1,12 @@
 {
     "extends": "@tsconfig/node10/tsconfig.json",
     "compilerOptions": {
+        "lib": ["DOM", "ES2018"],
         "declaration": true,
         "declarationMap": true,
         "allowJs": false,
         "outDir": "dist"
     },
+    "include": ["src"],
     "exclude": ["node_modules", "dist"]
 }
