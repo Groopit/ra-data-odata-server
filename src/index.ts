@@ -7,24 +7,7 @@ import {
 } from "ra-core";
 import odata from "odata-client";
 import Parser from "fast-xml-parser";
-import {resource_id_mapper} from './ra-data-id-mapper';
-
-function get_resource_id(resource: string, id: Identifier) {
-  return resource !== "groups" ? id : odata.identifier(id);
-}
-
-function getresource(apiUrl: string, resource: string, id: Identifier) {
-  const o = odata({ service: apiUrl });
-  return o.resource(resource, get_resource_id(resource, id));
-}
-
-function getfilter(target: string, id: Identifier) {
-  if (target === "GroupId") {
-    return odata.identifier(id);
-  } else {
-    return id;
-  }
-}
+import { resource_id_mapper } from "./ra-data-id-mapper";
 
 interface GetRelatedParams extends GetListParams {
   id?: string;
@@ -38,6 +21,7 @@ interface CreateRelatedParams extends CreateParams {
 
 interface EntityProperty {
   Name: string;
+  Type: string;
 }
 
 interface EntityType {
@@ -48,6 +32,7 @@ interface EntityType {
 interface EntitySet {
   Name: string;
   Url: string;
+  Type: EntityType;
   Key?: EntityProperty;
 }
 
@@ -69,9 +54,13 @@ async function get_entities(url: string) {
       //
       if (e.Key && !Array.isArray(e.Key.PropertyRef)) {
         const name = `${namespace}.${e._Name}`;
+        const properties: [EntityProperty] = e.Property.map((p: any) => ({
+          Name: p._Name,
+          Type: p._Type,
+        }));
         entities[name] = {
-          Property: [],
-          Key: { Name: e.Key.PropertyRef._Name },
+          Property: properties,
+          Key: properties.find((p) => p.Name === e.Key.PropertyRef._Name),
         };
       }
     }
@@ -87,6 +76,7 @@ async function get_entities(url: string) {
         entitySets[set._Name] = {
           Name: set._Name,
           Url: set._Name,
+          Type: entities[set._EntityType],
           Key: entities[set._EntityType].Key,
         };
       }
@@ -112,61 +102,69 @@ const ra_data_odata_server = async (
     }
   }
 
-  return resource_id_mapper({
-    getResources: () => Object.keys(resources),
-    getList: async (resource, params: GetRelatedParams) => {
-      const { page, perPage } = params.pagination;
-      const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
-      let o = odata({
-        service: apiUrl,
-      }).count(true);
-      if (params.id) {
-        o = o.resource(resource, params.id);
-      } else {
-        o = o.resource(resource);
-      }
-      if (params.related) {
-        o = o.resource(params.related);
-      }
+  /**
+   * in order to support entities with non-string IDs we
+   * need to look at the key type since they are encoded
+   * differently in the odata URL ("/Employees(1)" vs
+   * "/Customers('ALFKI')")
+   * @param resource supplies the resource
+   * @param id supplies the entity ID
+   * @returns
+   */
+  function getresource(resource: string, id: Identifier) {
+    const o = odata({ service: apiUrl });
+    const type = resources[resource]?.Key?.Name ?? "UnknownType";
+    return o.resource(resource, getproperty_identifier(resource, type, id));
+  }
+  function getproperty_identifier(
+    resource: string,
+    propertyName: string,
+    id: Identifier
+  ) {
+    const type = resources[resource].Type.Property.find(
+      (p) => p.Name == propertyName
+    )?.Type;
+    if (type === "Edm.Int32" || type === "Edm.Guid") {
+      return odata.identifier(id);
+    } else {
+      return id;
+    }
+  }
 
-      o = o
-        .orderby(field, order)
-        .skip((page - 1) * perPage)
-        .top(perPage);
+  return resource_id_mapper(
+    {
+      getResources: () => Object.keys(resources),
+      getList: async (resource, params: GetRelatedParams) => {
+        const { page, perPage } = params.pagination;
+        const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
+        let o = odata({
+          service: apiUrl,
+        }).count(true);
+        if (params.id) {
+          o = o.resource(resource, params.id);
+        } else {
+          o = o.resource(resource);
+        }
+        if (params.related) {
+          o = o.resource(params.related);
+        }
 
-      for (const filterName in params.filter) {
-        o = o.filter(`Contains(${filterName},'${params.filter[filterName]}')`);
-      }
+        o = o
+          .orderby(field, order)
+          .skip((page - 1) * perPage)
+          .top(perPage);
 
-      return o.get(await options()).then((resp: any) => {
-        if (resp.statusCode !== 200) {
-          return Promise.reject(
-            new HttpError(
-              resp.statusMessage || "getList error",
-              resp.statusCode,
-              resp.body
-            )
+        for (const filterName in params.filter) {
+          o = o.filter(
+            `Contains(${filterName},'${params.filter[filterName]}')`
           );
         }
-        const json = JSON.parse(resp.body);
-        if (json.error) {
-          return Promise.reject(json.error.message);
-        }
-        return {
-          data: json.value,
-          total: json["@odata.count"],
-        };
-      });
-    },
 
-    getOne: async (resource, params) =>
-      getresource(apiUrl, resource, params.id)
-        .get(await options())
-        .then((resp: any) => {
+        return o.get(await options()).then((resp: any) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(
               new HttpError(
-                resp.statusMessage || "getOne error",
+                resp.statusMessage || "getList error",
                 resp.statusCode,
                 resp.body
               )
@@ -176,91 +174,90 @@ const ra_data_odata_server = async (
           if (json.error) {
             return Promise.reject(json.error.message);
           }
-          return { data: json };
-        }),
+          return {
+            data: json.value,
+            total: json["@odata.count"],
+          };
+        });
+      },
 
-    getMany: async (resource, params) => {
-      const o = await options();
-      const results = params.ids.map((id) =>
-        getresource(apiUrl, resource, id)
-          .get(o)
+      getOne: async (resource, params) =>
+        getresource(resource, params.id)
+          .get(await options())
           .then((resp: any) => {
             if (resp.statusCode !== 200) {
-              return {
-                id: id,
-                error: new HttpError(
-                  resp.statusMessage || "getMany error",
+              return Promise.reject(
+                new HttpError(
+                  resp.statusMessage || "getOne error",
                   resp.statusCode,
                   resp.body
-                ),
-              };
+                )
+              );
             }
             const json = JSON.parse(resp.body);
             if (json.error) {
-              return {
-                id: id,
-                error: new HttpError(
-                  resp.statusMessage || "getMany error",
-                  json.error,
-                  resp.body
-                ),
-              };
+              return Promise.reject(json.error.message);
             }
-            return json;
-          })
-      );
+            return { data: json };
+          }),
 
-      const values = await Promise.all(results);
-      return { data: values };
-    },
+      getMany: async (resource, params) => {
+        const o = await options();
+        const results = params.ids.map((id) =>
+          getresource(resource, id)
+            .get(o)
+            .then((resp: any) => {
+              if (resp.statusCode !== 200) {
+                return {
+                  id: id,
+                  error: new HttpError(
+                    resp.statusMessage || "getMany error",
+                    resp.statusCode,
+                    resp.body
+                  ),
+                };
+              }
+              const json = JSON.parse(resp.body);
+              if (json.error) {
+                return {
+                  id: id,
+                  error: new HttpError(
+                    resp.statusMessage || "getMany error",
+                    json.error,
+                    resp.body
+                  ),
+                };
+              }
+              return json;
+            })
+        );
 
-    getManyReference: async (resource, params) => {
-      const { page, perPage } = params.pagination;
-      const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
-      if (!params.id) {
-        return Promise.resolve({ data: [], total: 0 });
-      }
-      const o = params.filter.parent
-        ? getresource(apiUrl, params.filter.parent, params.id).expand(
-            params.target
-          )
-        : odata({ service: apiUrl, resources: resource })
-            .count(true)
-            .filter(params.target, "=", getfilter(params.target, params.id));
+        const values = await Promise.all(results);
+        return { data: values };
+      },
 
-      o.count(true)
-        .orderby(field, order)
-        .skip((page - 1) * perPage)
-        .top(perPage);
-
-      return o.get(await options()).then((resp: any) => {
-        if (resp.statusCode !== 200) {
-          return Promise.reject(resp.body);
+      getManyReference: async (resource, params) => {
+        const { page, perPage } = params.pagination;
+        const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
+        if (!params.id) {
+          return Promise.resolve({ data: [], total: 0 });
         }
-        const json = JSON.parse(resp.body);
-        if (json.error) {
-          return Promise.reject(json.error.message);
-        }
-        if (params.filter.parent) {
-          const d = json[params.target];
-          return {
-            data: d,
-            total: d.length,
-          };
-        } else {
-          const d = json.value;
-          return {
-            data: d,
-            total: json["@odata.count"],
-          };
-        }
-      });
-    },
+        const o = params.filter.parent
+          ? getresource(params.filter.parent, params.id).expand(params.target)
+          : odata({ service: apiUrl, resources: resource })
+              .count(true)
+              .filter(
+                params.target,
+                "=",
+                getproperty_identifier(resource, params.target, params.id)
+              );
 
-    update: async (resource, params) =>
-      getresource(apiUrl, resource, params.id)
-        .patch(params.data, await options())
-        .then((resp: any) => {
+        o.count(true)
+          .orderby(field, order)
+          .skip((page - 1) * perPage)
+          .top(perPage);
+
+        return o.get(await options()).then((resp: any) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(resp.body);
           }
@@ -268,61 +265,90 @@ const ra_data_odata_server = async (
           if (json.error) {
             return Promise.reject(json.error.message);
           }
-          return { data: json };
-        }),
-
-    updateMany: (resource, params) =>
-      Promise.reject(new Error("not implemented")),
-
-    create: async (resource, params: CreateRelatedParams) => {
-      const o =
-        params.related && params.id
-          ? getresource(apiUrl, resource, params.id).resource(params.related)
-          : odata({
-              service: apiUrl,
-            }).resource(resource);
-
-      return o.post(params.data, await options()).then((resp: any) => {
-        if (resp.statusCode !== 200) {
-          return Promise.reject(resp.body);
-        }
-        const json = JSON.parse(resp.body);
-        if (json.error) {
-          return Promise.reject(json.error.message);
-        }
-        return { data: json };
-      });
-    },
-
-    delete: async (resource, params) =>
-      getresource(apiUrl, resource, params.id)
-        .delete(await options())
-        .then((resp: any) => {
-          if (resp.statusCode !== 200) {
-            return Promise.reject(resp.body);
+          if (params.filter.parent) {
+            const d = json[params.target];
+            return {
+              data: d,
+              total: d.length,
+            };
+          } else {
+            const d = json.value;
+            return {
+              data: d,
+              total: json["@odata.count"],
+            };
           }
-          const json = JSON.parse(resp.body);
-          if (json.error) {
-            return Promise.reject(json.error.message);
-          }
-          return { data: json };
-        }),
+        });
+      },
 
-    deleteMany: async (resource, params) => {
-      const results = params.ids.map((id) =>
-        getresource(apiUrl, resource, id)
-          .delete()
+      update: async (resource, params) =>
+        getresource(resource, params.id)
+          .patch(params.data, await options())
           .then((resp: any) => {
-            if (resp.statusCode >= 200 && resp.statusCode < 300) {
-              return id;
+            if (resp.statusCode !== 200) {
+              return Promise.reject(resp.body);
             }
-          })
-      );
+            const json = JSON.parse(resp.body);
+            if (json.error) {
+              return Promise.reject(json.error.message);
+            }
+            return { data: json };
+          }),
 
-      const values = await Promise.all(results);
-      return { data: values };
+      updateMany: (resource, params) =>
+        Promise.reject(new Error("not implemented")),
+
+      create: async (resource, params: CreateRelatedParams) => {
+        const o =
+          params.related && params.id
+            ? getresource(resource, params.id).resource(params.related)
+            : odata({
+                service: apiUrl,
+              }).resource(resource);
+
+        return o.post(params.data, await options()).then((resp: any) => {
+          if (resp.statusCode !== 200) {
+            return Promise.reject(resp.body);
+          }
+          const json = JSON.parse(resp.body);
+          if (json.error) {
+            return Promise.reject(json.error.message);
+          }
+          return { data: json };
+        });
+      },
+
+      delete: async (resource, params) =>
+        getresource(resource, params.id)
+          .delete(await options())
+          .then((resp: any) => {
+            if (resp.statusCode !== 200) {
+              return Promise.reject(resp.body);
+            }
+            const json = JSON.parse(resp.body);
+            if (json.error) {
+              return Promise.reject(json.error.message);
+            }
+            return { data: json };
+          }),
+
+      deleteMany: async (resource, params) => {
+        const results = params.ids.map((id) =>
+          getresource(resource, id)
+            .delete()
+            .then((resp: any) => {
+              if (resp.statusCode >= 200 && resp.statusCode < 300) {
+                return id;
+              }
+            })
+        );
+
+        const values = await Promise.all(results);
+        return { data: values };
+      },
     },
-  }, id_map);
+    id_map
+  );
 };
 
 export default ra_data_odata_server;
