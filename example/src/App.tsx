@@ -15,7 +15,7 @@ function App() {
   return dataProvider ? (
     <Admin dataProvider={dataProvider}>
       {dataProvider.getResources().map((r) => (
-        <Resource name={r} list={ListGuesser} />
+        <Resource key={r} name={r} list={ListGuesser} />
       ))}
     </Admin>
   ) : (
