@@ -62,7 +62,11 @@ async function get_entities(url: string) {
   for (const schema of metadata.Edmx.DataServices.Schema) {
     const namespace = schema._Namespace;
     for (const e of schema.EntityType ?? []) {
-      if (e.Key) {
+      //
+      // Skip entity types with no key or with a compound key
+      // as react-admin doesn't support such things
+      //
+      if (e.Key && !Array.isArray(e.Key.PropertyRef)) {
         const name = `${namespace}.${e._Name}`;
         entities[name] = {
           Property: [],
@@ -74,11 +78,17 @@ async function get_entities(url: string) {
   const entitySets: Record<string, EntitySet> = {};
   for (const schema of metadata.Edmx.DataServices.Schema) {
     for (const set of schema.EntityContainer?.EntitySet ?? []) {
-      entitySets[set._Name] = {
-        Name: set._Name,
-        Url: set._Name,
-        Key: entities[set._EntityType].Key,
-      };
+      //
+      // skip entity sets composed of entity types we don't support
+      // (no key or a compound key)
+      //
+      if (entities[set._EntityType]) {
+        entitySets[set._Name] = {
+          Name: set._Name,
+          Url: set._Name,
+          Key: entities[set._EntityType].Key,
+        };
+      }
     }
   }
   return entitySets;
