@@ -84,8 +84,8 @@ async function get_entities(url: string) {
   return entitySets;
 }
 
-interface OdataDataProvider extends DataProvider {
-  getEntities: () => string[];
+export interface OdataDataProvider extends DataProvider {
+  getResources: () => string[];
 }
 
 const ra_data_odata_server = async (
@@ -103,7 +103,7 @@ const ra_data_odata_server = async (
   };
 
   return {
-    getEntities: () => [],
+    getResources: () => Object.keys(resources),
     getList: async (resource, params: GetRelatedParams) => {
       const { page, perPage } = params.pagination;
       const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
