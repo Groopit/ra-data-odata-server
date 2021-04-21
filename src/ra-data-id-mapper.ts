@@ -60,7 +60,6 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   wrapper.getList = (resource: string, params: GetListParams) => {
     const id_name = id_map[resource];
     if (id_name) {
-      console.log(`mapping id to ${id_name} for '${resource}`);
       if (params.sort.field === "id") {
         params.sort.field = id_name;
       }
@@ -80,7 +79,12 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
       if (params.id === "id") {
         params.id = id_name;
       }
-      console.log(`mapping id to ${id_name} for '${resource}`);
+      return dataProvider.getOne(resource, params).then((result) => {
+        return {
+          ...result,
+          data: rename_to_id(id_name, result.data),
+        } as any;
+      });
     }
     return dataProvider.getOne(resource, params);
   };
