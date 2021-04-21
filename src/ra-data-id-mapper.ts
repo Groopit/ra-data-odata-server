@@ -1,4 +1,26 @@
-import { DataProvider, GetListParams } from "ra-core";
+import {
+  CreateParams,
+  DataProvider,
+  DeleteManyParams,
+  DeleteParams,
+  GetListParams,
+  GetManyParams,
+  GetManyReferenceParams,
+  GetOneParams,
+  UpdateManyParams,
+  UpdateParams,
+} from "ra-core";
+
+/**
+ * clever little function that renames any property in an object to 'id'
+ * @param id_name the original name of the property, e.g. 'UserID'
+ * @param param1  the object to be renamed, e.g. {UserId: "foo", Name: "John Smith"}
+ * @returns the renamed object, e.g. {id: "foo", Name: "John Smith"}
+ */
+const rename_to_id = (id_name: string, { [id_name]: ID, ...object }) => ({
+  id: ID,
+  ...object,
+});
 
 /**
  * Wraps a react-admin data provider and transforms the 'id' field in all input and
@@ -34,10 +56,93 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   dataProvider: ProviderType,
   id_map: Record<string, string>
 ): ProviderType {
-  const wrapper:ProviderType = Object.create(dataProvider);
+  const wrapper: ProviderType = Object.create(dataProvider);
   wrapper.getList = (resource: string, params: GetListParams) => {
-    console.log("getList called with resource " + resource);
+    const id_name = id_map[resource];
+    if (id_name) {
+      console.log(`mapping id to ${id_name} for '${resource}`);
+      if (params.sort.field === "id") {
+        params.sort.field = id_name;
+      }
+      return dataProvider.getList(resource, params).then((result) => {
+        return {
+          ...result,
+          data: result.data.map((v) => rename_to_id(id_name, v)),
+        } as any;
+      });
+    }
     return dataProvider.getList(resource, params);
   };
+
+  wrapper.getOne = (resource: string, params: GetOneParams) => {
+    const id_name = id_map[resource];
+    if (id_name) {
+      if (params.id === "id") {
+        params.id = id_name;
+      }
+      console.log(`mapping id to ${id_name} for '${resource}`);
+    }
+    return dataProvider.getOne(resource, params);
+  };
+
+  wrapper.getMany = (resource: string, params: GetManyParams) => {
+    const id_name = id_map[resource];
+    if (id_name) {
+      console.log(`mapping id to ${id_name} for '${resource}`);
+    }
+    return dataProvider.getMany(resource, params);
+  };
+
+  wrapper.getManyReference = (
+    resource: string,
+    params: GetManyReferenceParams
+  ) => {
+    const id_name = id_map[resource];
+    if (id_name) {
+      console.log(`mapping id to ${id_name} for '${resource}`);
+    }
+    return dataProvider.getManyReference(resource, params);
+  };
+
+  wrapper.update = (resource: string, params: UpdateParams) => {
+    const id_name = id_map[resource];
+    if (id_name) {
+      console.log(`mapping id to ${id_name} for '${resource}`);
+    }
+    return dataProvider.update(resource, params);
+  };
+
+  wrapper.updateMany = (resource: string, params: UpdateManyParams) => {
+    const id_name = id_map[resource];
+    if (id_name) {
+      console.log(`mapping id to ${id_name} for '${resource}`);
+    }
+    return dataProvider.updateMany(resource, params);
+  };
+
+  wrapper.create = (resource: string, params: CreateParams) => {
+    const id_name = id_map[resource];
+    if (id_name) {
+      console.log(`mapping id to ${id_name} for '${resource}`);
+    }
+    return dataProvider.create(resource, params);
+  };
+
+  wrapper.delete = (resource: string, params: DeleteParams) => {
+    const id_name = id_map[resource];
+    if (id_name) {
+      console.log(`mapping id to ${id_name} for '${resource}`);
+    }
+    return dataProvider.delete(resource, params);
+  };
+
+  wrapper.deleteMany = (resource: string, params: DeleteManyParams) => {
+    const id_name = id_map[resource];
+    if (id_name) {
+      console.log(`mapping id to ${id_name} for '${resource}`);
+    }
+    return dataProvider.deleteMany(resource, params);
+  };
+
   return wrapper;
 }

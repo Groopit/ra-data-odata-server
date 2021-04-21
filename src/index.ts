@@ -104,14 +104,13 @@ const ra_data_odata_server = async (
   options: () => Promise<any> = () => Promise.resolve()
 ): Promise<OdataDataProvider> => {
   const resources = await get_entities(apiUrl);
-  console.log(resources);
-  const map_fieldname = (resource: string, field: string) => {
-    if (field == "id") {
-      return resources[resource]?.Key?.Name ?? "id";
-    } else {
-      return field;
+  const id_map: Record<string, string> = {};
+  for (const r in resources) {
+    const id_name = resources[r]?.Key?.Name ?? "id";
+    if (id_name !== "id") {
+      id_map[r] = id_name;
     }
-  };
+  }
 
   return resource_id_mapper({
     getResources: () => Object.keys(resources),
@@ -131,7 +130,7 @@ const ra_data_odata_server = async (
       }
 
       o = o
-        .orderby(map_fieldname(resource, field), order)
+        .orderby(field, order)
         .skip((page - 1) * perPage)
         .top(perPage);
 
@@ -154,10 +153,7 @@ const ra_data_odata_server = async (
           return Promise.reject(json.error.message);
         }
         return {
-          data: json.value.map((v: { [x: string]: any }) => ({
-            ...v,
-            id: v[map_fieldname(resource, "id")],
-          })),
+          data: json.value,
           total: json["@odata.count"],
         };
       });
@@ -326,7 +322,7 @@ const ra_data_odata_server = async (
       const values = await Promise.all(results);
       return { data: values };
     },
-  }, {});
+  }, id_map);
 };
 
 export default ra_data_odata_server;
