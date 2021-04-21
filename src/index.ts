@@ -7,6 +7,7 @@ import {
 } from "ra-core";
 import odata from "odata-client";
 import Parser from "fast-xml-parser";
+import {resource_id_mapper} from './ra-data-id-mapper';
 
 function get_resource_id(resource: string, id: Identifier) {
   return resource !== "groups" ? id : odata.identifier(id);
@@ -112,7 +113,7 @@ const ra_data_odata_server = async (
     }
   };
 
-  return {
+  return resource_id_mapper({
     getResources: () => Object.keys(resources),
     getList: async (resource, params: GetRelatedParams) => {
       const { page, perPage } = params.pagination;
@@ -325,7 +326,7 @@ const ra_data_odata_server = async (
       const values = await Promise.all(results);
       return { data: values };
     },
-  };
+  }, {});
 };
 
 export default ra_data_odata_server;
