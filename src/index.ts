@@ -36,8 +36,8 @@ interface EntitySet {
   Key?: EntityProperty;
 }
 
-async function get_entities(url: string) {
-  const m = await window.fetch(url + "/$metadata");
+async function get_entities(url: string, options?: RequestInit) {
+  const m = await window.fetch(url + "/$metadata", options);
   const t = await m.text();
   const metadata = Parser.parse(t, {
     ignoreNameSpace: true,
@@ -91,9 +91,9 @@ export interface OdataDataProvider extends DataProvider {
 
 const ra_data_odata_server = async (
   apiUrl: string,
-  options: () => Promise<any> = () => Promise.resolve()
+  options?: RequestInit
 ): Promise<OdataDataProvider> => {
-  const resources = await get_entities(apiUrl);
+  const resources = await get_entities(apiUrl, options);
   const id_map: Record<string, string> = {};
   for (const r in resources) {
     const id_name = resources[r]?.Key?.Name ?? "id";
@@ -160,7 +160,7 @@ const ra_data_odata_server = async (
           );
         }
 
-        return o.get(await options()).then((resp: any) => {
+        return o.get(options).then((resp: any) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(
               new HttpError(
@@ -183,7 +183,7 @@ const ra_data_odata_server = async (
 
       getOne: async (resource, params) =>
         getresource(resource, params.id)
-          .get(await options())
+          .get(options)
           .then((resp: any) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(
@@ -202,7 +202,7 @@ const ra_data_odata_server = async (
           }),
 
       getMany: async (resource, params) => {
-        const o = await options();
+        const o = options;
         const results = params.ids.map((id) =>
           getresource(resource, id)
             .get(o)
@@ -257,7 +257,7 @@ const ra_data_odata_server = async (
           .skip((page - 1) * perPage)
           .top(perPage);
 
-        return o.get(await options()).then((resp: any) => {
+        return o.get(options).then((resp: any) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(resp.body);
           }
@@ -283,7 +283,7 @@ const ra_data_odata_server = async (
 
       update: async (resource, params) =>
         getresource(resource, params.id)
-          .patch(params.data, await options())
+          .patch(params.data, options)
           .then((resp: any) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(resp.body);
@@ -306,7 +306,7 @@ const ra_data_odata_server = async (
                 service: apiUrl,
               }).resource(resource);
 
-        return o.post(params.data, await options()).then((resp: any) => {
+        return o.post(params.data, options).then((resp: any) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(resp.body);
           }
@@ -320,7 +320,7 @@ const ra_data_odata_server = async (
 
       delete: async (resource, params) =>
         getresource(resource, params.id)
-          .delete(await options())
+          .delete(options)
           .then((resp: any) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(resp.body);
