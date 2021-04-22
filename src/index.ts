@@ -203,10 +203,9 @@ const ra_data_odata_server = async (
           }),
 
       getMany: async (resource, params) => {
-        const o = options;
         const results = params.ids.map((id) =>
           getresource(resource, id)
-            .get(o)
+            .get(options)
             .then((resp: any) => {
               if (resp.statusCode !== 200) {
                 return {
@@ -336,7 +335,7 @@ const ra_data_odata_server = async (
       deleteMany: async (resource, params) => {
         const results = params.ids.map((id) =>
           getresource(resource, id)
-            .delete()
+            .delete(options)
             .then((resp: any) => {
               if (resp.statusCode >= 200 && resp.statusCode < 300) {
                 return id;
