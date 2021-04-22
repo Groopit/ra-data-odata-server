@@ -73,7 +73,7 @@ async function get_entities(url: string, options?: RequestInit) {
       // (no key or a compound key)
       //
       if (entities[set._EntityType]) {
-        entitySets[set._Name] = {
+        entitySets[set._Name.toLowerCase()] = {
           Name: set._Name,
           Url: set._Name,
           Type: entities[set._EntityType],
@@ -113,15 +113,16 @@ const ra_data_odata_server = async (
    */
   function getresource(resource: string, id: Identifier) {
     const o = odata({ service: apiUrl });
-    const type = resources[resource]?.Key?.Name ?? "UnknownType";
-    return o.resource(resource, getproperty_identifier(resource, type, id));
+    const res = resources[resource.toLowerCase()];
+    const type = res?.Key?.Name ?? "UnknownType";
+    return o.resource(res.Url, getproperty_identifier(resource, type, id));
   }
   function getproperty_identifier(
     resource: string,
     propertyName: string,
     id: Identifier
   ) {
-    const type = resources[resource].Type.Property.find(
+    const type = resources[resource.toLowerCase()].Type.Property.find(
       (p) => p.Name == propertyName
     )?.Type;
     if (type === "Edm.Int32" || type === "Edm.Guid") {
@@ -133,7 +134,7 @@ const ra_data_odata_server = async (
 
   return resource_id_mapper(
     {
-      getResources: () => Object.keys(resources),
+      getResources: () => Object.values(resources).map(r => r.Name),
       getList: async (resource, params: GetRelatedParams) => {
         const { page, perPage } = params.pagination;
         const { field, order } = params.sort; // order is either 'DESC' or 'ASC'

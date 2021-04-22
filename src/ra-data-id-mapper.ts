@@ -58,7 +58,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
 ): ProviderType {
   const wrapper: ProviderType = Object.create(dataProvider);
   wrapper.getList = (resource: string, params: GetListParams) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       if (params.sort.field === "id") {
         params.sort.field = id_name;
@@ -74,7 +74,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   };
 
   wrapper.getOne = (resource: string, params: GetOneParams) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       if (params.id === "id") {
         params.id = id_name;
@@ -90,7 +90,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   };
 
   wrapper.getMany = (resource: string, params: GetManyParams) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
     }
@@ -101,7 +101,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
     resource: string,
     params: GetManyReferenceParams
   ) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
     }
@@ -109,7 +109,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   };
 
   wrapper.update = (resource: string, params: UpdateParams) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
     }
@@ -117,7 +117,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   };
 
   wrapper.updateMany = (resource: string, params: UpdateManyParams) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
     }
@@ -125,7 +125,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   };
 
   wrapper.create = (resource: string, params: CreateParams) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
     }
@@ -133,7 +133,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   };
 
   wrapper.delete = (resource: string, params: DeleteParams) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
     }
@@ -141,7 +141,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   };
 
   wrapper.deleteMany = (resource: string, params: DeleteManyParams) => {
-    const id_name = id_map[resource];
+    const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
     }
