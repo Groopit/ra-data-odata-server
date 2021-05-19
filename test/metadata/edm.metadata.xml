@@ -1,0 +1,26 @@
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+	<edmx:DataServices>
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="ResourceModelTool.Web.Models">
+        <EntityType Name="BoardProfile">
+            <Key>
+                <PropertyRef Name="ID"/>
+            </Key>
+            <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
+            <Property Name="Name" Type="Edm.String"/>
+            <Property Name="Effort" Type="Edm.String"/>
+            <Property Name="POMinus1" Type="Edm.Single" Nullable="false"/>
+            <Property Name="POPlus1" Type="Edm.Single" Nullable="false"/>
+            <Property Name="PO" Type="Edm.Single" Nullable="false"/>
+            <Property Name="CreatedDate" Type="Edm.DateTimeOffset" Nullable="false"/>
+            <Property Name="CreatedBy" Type="Edm.String"/>
+            <Property Name="ModifiedDate" Type="Edm.DateTimeOffset"/>
+            <Property Name="ModifiedBy" Type="Edm.String"/>
+        </EntityType>
+    </Schema>
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="Default">
+        <EntityContainer Name="Container">
+          <EntitySet Name="Customer" EntityType="ResourceModelTool.Web.Models.BoardProfile"/>
+        </EntityContainer>
+    </Schema>
+	</edmx:DataServices>
+</edmx:Edmx>
