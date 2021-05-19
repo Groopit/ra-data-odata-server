@@ -39,13 +39,7 @@ const edm = fs.readFileSync("./test/metadata/edm.metadata.xml").toString();
 
 test('EDM metadata', () => {
     const entities = parse_metadata(edm);
-    expect(Object.entries(entities).length).toBe(7);
-    expect(entities.products).toBeDefined();
-    expect(entities.productdetails).toBeDefined();
-    expect(entities.categories).toBeDefined();
-    expect(entities.suppliers).toBeDefined();
-    expect(entities.persons).toBeDefined();
-    expect(entities.persondetails).toBeDefined();
-    expect(entities.advertisements).toBeDefined();
-    expect(entities.categories).toBeDefined();
+    expect(Object.entries(entities).length).toBe(1);
+    expect(entities.customer).toBeDefined();
+    expect(entities.customer.Type.Property.length).toBe(10);
 });

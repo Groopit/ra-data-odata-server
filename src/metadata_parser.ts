@@ -23,6 +23,7 @@ export function parse_metadata(t: string): Record<string,EntitySet>
         ignoreNameSpace: true,
         attributeNamePrefix: "_",
         ignoreAttributes: false,
+        arrayMode: /Schema|EntityType|EntitySet/
       });
       const entities: Record<string, EntityType> = {};
       for (const schema of metadata.Edmx.DataServices.Schema) {
