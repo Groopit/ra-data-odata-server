@@ -34,9 +34,9 @@ export interface OdataDataProvider extends DataProvider {
 
 const ra_data_odata_server = async (
   apiUrl: string,
-  options?: RequestInit
+  option_callback: (() => Promise<RequestInit>) = () => Promise.resolve({})
 ): Promise<OdataDataProvider> => {
-  const resources = await get_entities(apiUrl, options);
+  const resources = await get_entities(apiUrl, await option_callback());
   const id_map: Record<string, string> = {};
   for (const r in resources) {
     const id_name = resources[r]?.Key?.Name ?? "id";
@@ -104,7 +104,7 @@ const ra_data_odata_server = async (
           );
         }
 
-        return o.get(options).then((resp: Response) => {
+        return o.get(await option_callback()).then((resp: Response) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(
               new HttpError(
@@ -127,7 +127,7 @@ const ra_data_odata_server = async (
 
       getOne: async (resource, params) =>
         getresource(resource, params.id)
-          .get(options)
+          .get(await option_callback())
           .then((resp: Response) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(
@@ -146,6 +146,7 @@ const ra_data_odata_server = async (
           }),
 
       getMany: async (resource, params) => {
+        const options = await option_callback();
         const results = params.ids.map((id) =>
           getresource(resource, id)
             .get(options)
@@ -200,7 +201,7 @@ const ra_data_odata_server = async (
           .skip((page - 1) * perPage)
           .top(perPage);
 
-        return o.get(options).then((resp: Response) => {
+        return o.get(await option_callback()).then((resp: Response) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(resp.body);
           }
@@ -226,7 +227,7 @@ const ra_data_odata_server = async (
 
       update: async (resource, params) =>
         getresource(resource, params.id)
-          .patch(params.data, options)
+          .patch(params.data, await option_callback())
           .then((resp: Response) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(resp.body);
@@ -249,7 +250,7 @@ const ra_data_odata_server = async (
                 service: apiUrl,
               }).resource(resource);
 
-        return o.post(params.data, options).then((resp: Response) => {
+        return o.post(params.data, await option_callback()).then((resp: Response) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(resp.body);
           }
@@ -263,7 +264,7 @@ const ra_data_odata_server = async (
 
       delete: async (resource, params) =>
         getresource(resource, params.id)
-          .delete(options)
+          .delete(await option_callback())
           .then((resp: Response) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(resp.body);
@@ -276,6 +277,7 @@ const ra_data_odata_server = async (
           }),
 
       deleteMany: async (resource, params) => {
+        const options = await option_callback();
         const results = params.ids.map((id) =>
           getresource(resource, id)
             .delete(options)
