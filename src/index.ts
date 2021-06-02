@@ -8,6 +8,7 @@ import {
 import odata from "odata-client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import {parse_metadata} from "./metadata_parser";
+import { Response } from "request";
 
 interface GetRelatedParams extends GetListParams {
   id?: string;
@@ -103,7 +104,7 @@ const ra_data_odata_server = async (
           );
         }
 
-        return o.get(options).then((resp: any) => {
+        return o.get(options).then((resp: Response) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(
               new HttpError(
@@ -127,7 +128,7 @@ const ra_data_odata_server = async (
       getOne: async (resource, params) =>
         getresource(resource, params.id)
           .get(options)
-          .then((resp: any) => {
+          .then((resp: Response) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(
                 new HttpError(
@@ -148,7 +149,7 @@ const ra_data_odata_server = async (
         const results = params.ids.map((id) =>
           getresource(resource, id)
             .get(options)
-            .then((resp: any) => {
+            .then((resp: Response) => {
               if (resp.statusCode !== 200) {
                 return {
                   id: id,
@@ -199,7 +200,7 @@ const ra_data_odata_server = async (
           .skip((page - 1) * perPage)
           .top(perPage);
 
-        return o.get(options).then((resp: any) => {
+        return o.get(options).then((resp: Response) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(resp.body);
           }
@@ -226,7 +227,7 @@ const ra_data_odata_server = async (
       update: async (resource, params) =>
         getresource(resource, params.id)
           .patch(params.data, options)
-          .then((resp: any) => {
+          .then((resp: Response) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(resp.body);
             }
@@ -248,7 +249,7 @@ const ra_data_odata_server = async (
                 service: apiUrl,
               }).resource(resource);
 
-        return o.post(params.data, options).then((resp: any) => {
+        return o.post(params.data, options).then((resp: Response) => {
           if (resp.statusCode !== 200) {
             return Promise.reject(resp.body);
           }
@@ -263,7 +264,7 @@ const ra_data_odata_server = async (
       delete: async (resource, params) =>
         getresource(resource, params.id)
           .delete(options)
-          .then((resp: any) => {
+          .then((resp: Response) => {
             if (resp.statusCode !== 200) {
               return Promise.reject(resp.body);
             }
@@ -278,7 +279,7 @@ const ra_data_odata_server = async (
         const results = params.ids.map((id) =>
           getresource(resource, id)
             .delete(options)
-            .then((resp: any) => {
+            .then((resp: Response) => {
               if (resp.statusCode >= 200 && resp.statusCode < 300) {
                 return id;
               }
