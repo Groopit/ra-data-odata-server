@@ -251,7 +251,7 @@ const ra_data_odata_server = async (
               }).resource(resource);
 
         return o.post(params.data, await option_callback()).then((resp: Response) => {
-          if (resp.statusCode !== 200) {
+          if (resp.statusCode >= 300) {
             return Promise.reject(resp.body);
           }
           const json = JSON.parse(resp.body);
