@@ -72,6 +72,24 @@ OData supports hierarchical relationships - e.g. `/Customers('ALFKI')/Orders` re
 
 This also supports many-to-many relationships without requiring that your service exposes an intermediate join table as a resource.
 
+## Authentication hook
+
+To support OData servers that require authentication, you can provide an options callback when creating the data provider. This will get called before each query and must return a `Promise<RequestInit>`.
+Usually just adding an Authorization header is sufficient, but you can override any of the [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request/Request) options. For example, if you have
+a `getAccessToken()` function that returns a `Promise<string>` you would initialize your provider like this.
+
+```ts
+            odataProvider("https://myodataservice.com/odata", () => {
+                return getAccessToken()
+                    .then((token) => ({
+                        headers: {
+                            Authorization: "Bearer " + token,
+                        },
+                    }));
+            }).then((provider) => setDataProvider(provider));
+
+```
+
 ## Known Limitations
 
 - EntitySets with no keys or compound keys are not supported - react-admin only supports string keys
