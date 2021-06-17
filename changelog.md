@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.0
+
+- Document authentication hook
+- Handle all HTTP success status on POSTs (thanks @petecollins73)
+
 ## v2.0.0
 
 - Change ra_data_odata_server() factory to take a callback that returns `Promise<RequestInit>` instead
