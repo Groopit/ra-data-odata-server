@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.1.1
+
+- Update npm dependencies to fix #6 - json-schema vulnerability
+
 ## v2.1.0
 
 - Document authentication hook
