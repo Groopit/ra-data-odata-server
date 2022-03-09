@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.2.0
+
+- Update npm dependencies to fix Dependabot alerts
+- Update odata-client dependency to 0.7.0
+
 ## v2.1.1
 
 - Update npm dependencies to fix #6 - json-schema vulnerability
