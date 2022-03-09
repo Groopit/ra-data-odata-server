@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.2.1
+
+- Put odata-client back to 0.6.16 since the new got dependency breaks the browser
 ## v2.2.0
 
 - Update npm dependencies to fix Dependabot alerts
