@@ -9,6 +9,7 @@ import odata from "odata-client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
 import { Response } from "request";
+import fetch from "cross-fetch";
 
 interface GetRelatedParams extends GetListParams {
   id?: string;
@@ -21,7 +22,7 @@ interface CreateRelatedParams extends CreateParams {
 }
 
 async function get_entities(url: string, options?: RequestInit) {
-  const m = await window.fetch(url + "/$metadata", options);
+  const m = await fetch(url + "/$metadata", options);
   const t = await m.text();
 
   return parse_metadata(t);
@@ -193,12 +194,10 @@ const ra_data_odata_server = async (
                 params.target,
                 "=",
                 getproperty_identifier(resource, params.target, params.id)
-              );
-
-        o.count(true)
-          .orderby(field, order)
-          .skip((page - 1) * perPage)
-          .top(perPage);
+              )
+              .orderby(field, order)
+              .skip((page - 1) * perPage)
+              .top(perPage);
 
         return o.get(await option_callback()).then((resp: Response) => {
           if (resp.statusCode !== 200) {
@@ -209,10 +208,12 @@ const ra_data_odata_server = async (
             return Promise.reject(json.error.message);
           }
           if (params.filter.parent) {
-            const d = json[params.target];
+            const d = json[params.target] as any[];
             return {
-              data: d,
-              total: d.length,
+              data: d
+                .sort((a, b) => (a[field] < b[field] ? -1 : 1))
+                .slice((page - 1) * perPage, (page - 1) * perPage + perPage),
+              total: d.length < perPage ? d.length : perPage,
             };
           } else {
             const d = json.value;
