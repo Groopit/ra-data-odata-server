@@ -1,27 +1,28 @@
 import {
   CreateParams,
   DataProvider,
+  DeleteManyParams,
+  DeleteManyResult,
+  DeleteParams,
   GetListParams,
+  GetManyParams,
+  GetManyReferenceParams,
+  GetOneParams,
   HttpError,
   Identifier,
+  Record as RARecord,
+  UpdateParams,
 } from "ra-core";
-import odata from "odata-client";
+import { OData, param, EdmV4, ODataQueryParam } from "@odata/client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
-import { Response } from "request";
-import fetch from "cross-fetch";
 
 interface GetRelatedParams extends GetListParams {
   id?: string;
   related?: string;
 }
 
-interface CreateRelatedParams extends CreateParams {
-  id?: Identifier;
-  related?: string;
-}
-
-async function get_entities(url: string, options?: RequestInit) {
+async function get_entities(url: string, options: ODataRequestOptions) {
   const m = await fetch(url + "/$metadata", options);
   const t = await m.text();
 
@@ -32,9 +33,14 @@ export interface OdataDataProvider extends DataProvider {
   getResources: () => string[];
 }
 
+interface ODataRequestOptions {
+  headers?: Record<string, string>;
+}
+
 const ra_data_odata_server = async (
   apiUrl: string,
-  option_callback: () => Promise<RequestInit> = () => Promise.resolve({})
+  option_callback: () => Promise<ODataRequestOptions> = () =>
+    Promise.resolve({})
 ): Promise<OdataDataProvider> => {
   const resources = await get_entities(apiUrl, await option_callback());
   const id_map: Record<string, string> = {};
@@ -54,12 +60,7 @@ const ra_data_odata_server = async (
    * @param id supplies the entity ID
    * @returns
    */
-  function getresource(resource: string, id: Identifier) {
-    const o = odata({ service: apiUrl });
-    const res = resources[resource.toLowerCase()];
-    const type = res?.Key?.Name ?? "UnknownType";
-    return o.resource(res.Url, getproperty_identifier(resource, type, id));
-  }
+
   function getproperty_identifier(
     resource: string,
     propertyName: string,
@@ -68,230 +69,223 @@ const ra_data_odata_server = async (
     const type = resources[resource.toLowerCase()].Type.Property.find(
       (p) => p.Name == propertyName
     )?.Type;
-    if (type === "Edm.Int32" || type === "Edm.Guid") {
-      return odata.identifier(id);
-    } else {
-      return id;
+    if (type === "Edm.Guid") {
+      return EdmV4.Guid.from(id as string);
+    } else if (type === "Edm.Int32" && typeof id !== "number") {
+      return parseInt(id);
     }
+    return id;
   }
+
+  const getClient = async () => {
+    const commonHeaders = (await option_callback()).headers;
+    const client = OData.New4({
+      metadataUri: apiUrl + "/$metadata",
+      commonHeaders,
+    });
+    return client;
+  };
+
+  const getEntity = async <RecordType extends RARecord = RARecord>(
+    resource: string,
+    id: Identifier,
+    params?: ODataQueryParam
+  ) => {
+    const res = resources[resource.toLowerCase()];
+    const keyName = res?.Key?.Name ?? "UnknownKey";
+    const client = await getClient();
+    const es = client.getEntitySet<RecordType>(resource);
+
+    return await es.retrieve(
+      getproperty_identifier(resource, keyName, id),
+      params
+    );
+  };
+  const getEntities = async <RecordType extends RARecord = RARecord>(
+    resource: string,
+    params: ODataQueryParam
+  ) => {
+    const client = await getClient();
+    const result = await client.newRequest<RecordType>({
+      collection: resource,
+      params,
+    });
+
+    return { data: result.value ?? [], total: result["@odata.count"] ?? 0 };
+  };
 
   return resource_id_mapper(
     {
       getResources: () => Object.values(resources).map((r) => r.Name),
-      getList: async (resource, params: GetRelatedParams) => {
+      getList: async <RecordType extends RARecord = RARecord>(
+        resource: string,
+        params: GetRelatedParams
+      ) => {
         const { page, perPage } = params.pagination;
         const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
-        let o = odata({
-          service: apiUrl,
-        }).count(true);
-        if (params.id) {
-          o = o.resource(resource, params.id);
-        } else {
-          o = o.resource(resource);
-        }
-        if (params.related) {
-          o = o.resource(params.related);
-        }
+        const client = await getClient();
 
-        o = o
-          .orderby(field, order)
+        let p = param()
+          .count()
+          .orderby(field, order === "DESC" ? "desc" : "asc")
           .skip((page - 1) * perPage)
           .top(perPage);
-
         for (const filterName in params.filter) {
-          o = o.filter(
-            `Contains(${filterName},'${params.filter[filterName]}')`
+          p = p.filter(
+            client
+              .newFilter()
+              .property(
+                `Contains(${filterName},'${params.filter[filterName]}')`
+              )
+              .eq(true)
+          );
+        }
+        if (params.related) {
+          p = p.expand(params.related);
+        }
+        const resp = await client.newRequest<RecordType>({
+          collection: resource,
+          params: p,
+        });
+        if (resp.error) {
+          return Promise.reject(
+            new HttpError(resp.error.message || "getOne error", resp.error.code)
           );
         }
 
-        return o.get(await option_callback()).then((resp: Response) => {
-          if (resp.statusCode !== 200) {
-            return Promise.reject(
-              new HttpError(
-                resp.statusMessage || "getList error",
-                resp.statusCode,
-                resp.body
-              )
-            );
-          }
-          const json = JSON.parse(resp.body);
-          if (json.error) {
-            return Promise.reject(json.error.message);
-          }
-          return {
-            data: json.value,
-            total: json["@odata.count"],
-          };
-        });
+        return {
+          data: resp.value ?? [],
+          total: resp["@odata.count"] ?? 0,
+        };
+
+        // if (params.id) {
+        //   o = o.resource(resource, params.id);
+        // } else {
+
+        //   return {
+        //     data: json.value,
+        //     total: json["@odata.count"],
+        //   };
+        // });
       },
 
-      getOne: async (resource, params) =>
-        getresource(resource, params.id)
-          .get(await option_callback())
-          .then((resp: Response) => {
-            if (resp.statusCode !== 200) {
-              return Promise.reject(
-                new HttpError(
-                  resp.statusMessage || "getOne error",
-                  resp.statusCode,
-                  resp.body
-                )
-              );
-            }
-            const json = JSON.parse(resp.body);
-            if (json.error) {
-              return Promise.reject(json.error.message);
-            }
-            return { data: json };
-          }),
+      getOne: async <RecordType extends RARecord = RARecord>(
+        resource: string,
+        params: GetOneParams
+      ) => {
+        return { data: await getEntity<RecordType>(resource, params.id) };
+      },
 
-      getMany: async (resource, params) => {
-        const options = await option_callback();
-        const results = params.ids.map((id) =>
-          getresource(resource, id)
-            .get(options)
-            .then((resp: Response) => {
-              if (resp.statusCode !== 200) {
-                return {
-                  id: id,
-                  error: new HttpError(
-                    resp.statusMessage || "getMany error",
-                    resp.statusCode,
-                    resp.body
-                  ),
-                };
-              }
-              const json = JSON.parse(resp.body);
-              if (json.error) {
-                return {
-                  id: id,
-                  error: new HttpError(
-                    resp.statusMessage || "getMany error",
-                    json.error,
-                    resp.body
-                  ),
-                };
-              }
-              return json;
-            })
+      getMany: async <RecordType extends RARecord = RARecord>(
+        resource: string,
+        params: GetManyParams
+      ) => {
+        const res2 = params.ids.map((id) =>
+          getEntity<RecordType>(resource, id)
         );
-
-        const values = await Promise.all(results);
-        return { data: values };
+        const val2 = await Promise.all(res2);
+        return { data: val2 };
       },
 
-      getManyReference: async (resource, params) => {
+      getManyReference: async <RecordType extends RARecord = RARecord>(
+        resource: string,
+        params: GetManyReferenceParams
+      ) => {
         const { page, perPage } = params.pagination;
         const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
         if (!params.id) {
           return Promise.resolve({ data: [], total: 0 });
         }
-        const o = params.filter.parent
-          ? getresource(params.filter.parent, params.id).expand(params.target)
-          : odata({ service: apiUrl, resources: resource })
-              .count(true)
-              .filter(
-                params.target,
-                "=",
-                getproperty_identifier(resource, params.target, params.id)
-              )
-              .orderby(field, order)
-              .skip((page - 1) * perPage)
-              .top(perPage);
-
-        return o.get(await option_callback()).then((resp: Response) => {
-          if (resp.statusCode !== 200) {
-            return Promise.reject(resp.body);
-          }
-          const json = JSON.parse(resp.body);
-          if (json.error) {
-            return Promise.reject(json.error.message);
-          }
-          if (params.filter.parent) {
-            const d = json[params.target] as any[];
-            return {
-              data: d
-                .sort((a, b) => (a[field] < b[field] ? -1 : 1))
-                .slice((page - 1) * perPage, (page - 1) * perPage + perPage),
-              total: d.length < perPage ? d.length : perPage,
-            };
-          } else {
-            const d = json.value;
-            return {
-              data: d,
-              total: json["@odata.count"],
-            };
-          }
-        });
+        if (params.filter.parent) {
+          const odataParams = OData.newParam().expand(params.target);
+          const o = await getEntity<RecordType>(
+            params.filter.parent,
+            params.id,
+            odataParams
+          );
+          const d = (o[params.target] as RecordType[]) ?? [];
+          return {
+            data: d
+              .sort((a, b) => (a[field] < b[field] ? -1 : 1))
+              .slice((page - 1) * perPage, (page - 1) * perPage + perPage),
+            total: d.length,
+          };
+        } else {
+          const odataParams = OData.newParam()
+            .count()
+            .filter(
+              OData.newFilter()
+                .property(params.target)
+                .eq(getproperty_identifier(resource, params.target, params.id))
+            )
+            .orderby(field, order === "DESC" ? "desc" : "asc")
+            .skip((page - 1) * perPage)
+            .top(perPage);
+          return await getEntities<RecordType>(resource, odataParams);
+        }
       },
 
-      update: async (resource, params) =>
-        getresource(resource, params.id)
-          .patch(params.data, await option_callback())
-          .then((resp: Response) => {
-            if (resp.statusCode !== 200) {
-              return Promise.reject(resp.body);
-            }
-            const json = JSON.parse(resp.body);
-            if (json.error) {
-              return Promise.reject(json.error.message);
-            }
-            return { data: json };
-          }),
+      update: async <RecordType extends RARecord = RARecord>(
+        resource: string,
+        params: UpdateParams<RecordType>
+      ) => {
+        const res = resources[resource.toLowerCase()];
+        const keyName = res?.Key?.Name ?? "UnknownKey";
+        const client = await getClient();
+        const es = client.getEntitySet<RecordType>(resource);
+
+        await es.update(
+          getproperty_identifier(resource, keyName, params.id),
+          params.data
+        );
+
+        return { data: params.data };
+      },
 
       updateMany: (resource, params) =>
         Promise.reject(new Error("not implemented")),
 
-      create: async (resource, params: CreateRelatedParams) => {
-        const o =
-          params.related && params.id
-            ? getresource(resource, params.id).resource(params.related)
-            : odata({
-                service: apiUrl,
-              }).resource(resource);
+      create: async <RecordType extends RARecord = RARecord>(
+        resource: string,
+        params: CreateParams<RecordType>
+      ) => {
+        const client = await getClient();
+        const es = client.getEntitySet<RecordType>(resource);
 
-        return o
-          .post(params.data, await option_callback())
-          .then((resp: Response) => {
-            if (resp.statusCode >= 300) {
-              return Promise.reject(resp.body);
-            }
-            const json = JSON.parse(resp.body);
-            if (json.error) {
-              return Promise.reject(json.error.message);
-            }
-            return { data: json };
-          });
+        const data = await es.create(params.data);
+
+        return { data: data };
       },
 
-      delete: async (resource, params) =>
-        getresource(resource, params.id)
-          .delete(await option_callback())
-          .then((resp: Response) => {
-            if (resp.statusCode !== 200) {
-              return Promise.reject(resp.body);
-            }
-            const json = JSON.parse(resp.body);
-            if (json.error) {
-              return Promise.reject(json.error.message);
-            }
-            return { data: json };
-          }),
+      delete: async <RecordType extends RARecord = RARecord>(
+        resource: string,
+        params: DeleteParams
+      ) => {
+        const res = resources[resource.toLowerCase()];
+        const keyName = res?.Key?.Name ?? "UnknownKey";
+        const client = await getClient();
+        const es = client.getEntitySet<RecordType>(resource);
 
-      deleteMany: async (resource, params) => {
-        const options = await option_callback();
-        const results = params.ids.map((id) =>
-          getresource(resource, id)
-            .delete(options)
-            .then((resp: Response) => {
-              if (resp.statusCode >= 200 && resp.statusCode < 300) {
-                return id;
-              }
-            })
-        );
+        await es.delete(getproperty_identifier(resource, keyName, params.id));
+        return { data: { id: params.id } as RecordType };
+      },
 
-        const values = await Promise.all(results);
-        return { data: values };
+      deleteMany: async <RecordType extends RARecord = RARecord>(
+        resource: string,
+        params: DeleteManyParams
+      ): Promise<DeleteManyResult> => {
+        const res = resources[resource.toLowerCase()];
+        const keyName = res?.Key?.Name ?? "UnknownKey";
+        const client = await getClient();
+        const es = client.getEntitySet<RecordType>(resource);
+
+        const results = params.ids.map((id) => {
+          es.delete(getproperty_identifier(resource, keyName, id));
+        });
+
+        await Promise.all(results);
+
+        return { data: params.ids };
       },
     },
     id_map

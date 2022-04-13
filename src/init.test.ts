@@ -84,7 +84,14 @@ test("Get Order from Northwind by ID", async () => {
   expect(fetchMock.mock.calls[1][1]?.method).toEqual("GET");
 });
 
-test("Get list from Northwind", async () => {
+test("Get Order from Northwind by ID as string", async () => {
+  const provider = await odataProvider(Northwind);
+  await provider.getOne("Orders", { id: "10258" });
+  expect(fetchMock.mock.calls[1][0]).toEqual(Northwind + "/Orders(10258)");
+  expect(fetchMock.mock.calls[1][1]?.method).toEqual("GET");
+});
+
+test("Get Customer list from Northwind", async () => {
   const provider = await odataProvider(Northwind);
   fetchMock.mockOnce(
     fs.readFileSync("./test/service/Customers.json").toString(),
@@ -113,6 +120,31 @@ test("Get list from Northwind", async () => {
     Country: "Spain",
     Phone: "(91) 745 6200",
     Fax: "(91) 745 6210",
+  });
+});
+
+test("Get Category list from Northwind", async () => {
+  const provider = await odataProvider(Northwind);
+  fetchMock.mockOnce(
+    fs.readFileSync("./test/service/Categories.json").toString(),
+    { headers: { "Content-Type": "application/json" } }
+  );
+  const { data, total } = await provider.getList("Categories", {
+    pagination: { page: 1, perPage: 15 },
+    sort: { field: "CategoryID", order: "asc" },
+    filter: null,
+  });
+  expect(fetchMock.mock.calls[1][0]).toEqual(
+    Northwind + "/Categories?$orderby=CategoryID asc&$top=15&$count=true"
+  );
+  expect(fetchMock.mock.calls[1][1]?.method).toEqual("GET");
+  expect(total).toEqual(8);
+  expect(data.length).toEqual(8);
+  expect(typeof data[0].id).toEqual("number");
+  expect(data[0]).toMatchObject({
+    id: 1,
+    CategoryName: "Beverages",
+    Description: "Soft drinks, coffees, teas, beers, and ales",
   });
 });
 
