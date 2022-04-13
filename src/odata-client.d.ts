@@ -1,1 +1,1 @@
-declare module 'odata-client';
+declare module "odata-client";

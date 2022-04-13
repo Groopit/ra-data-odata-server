@@ -79,15 +79,13 @@ Usually just adding an Authorization header is sufficient, but you can override 
 a `getAccessToken()` function that returns a `Promise<string>` you would initialize your provider like this.
 
 ```ts
-            odataProvider("https://myodataservice.com/odata", () => {
-                return getAccessToken()
-                    .then((token) => ({
-                        headers: {
-                            Authorization: "Bearer " + token,
-                        },
-                    }));
-            }).then((provider) => setDataProvider(provider));
-
+odataProvider("https://myodataservice.com/odata", () => {
+  return getAccessToken().then((token) => ({
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+  }));
+}).then((provider) => setDataProvider(provider));
 ```
 
 ## Known Limitations

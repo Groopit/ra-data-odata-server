@@ -7,7 +7,7 @@ import {
 } from "ra-core";
 import odata from "odata-client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
-import {parse_metadata} from "./metadata_parser";
+import { parse_metadata } from "./metadata_parser";
 import { Response } from "request";
 
 interface GetRelatedParams extends GetListParams {
@@ -19,7 +19,6 @@ interface CreateRelatedParams extends CreateParams {
   id?: Identifier;
   related?: string;
 }
-
 
 async function get_entities(url: string, options?: RequestInit) {
   const m = await window.fetch(url + "/$metadata", options);
@@ -34,7 +33,7 @@ export interface OdataDataProvider extends DataProvider {
 
 const ra_data_odata_server = async (
   apiUrl: string,
-  option_callback: (() => Promise<RequestInit>) = () => Promise.resolve({})
+  option_callback: () => Promise<RequestInit> = () => Promise.resolve({})
 ): Promise<OdataDataProvider> => {
   const resources = await get_entities(apiUrl, await option_callback());
   const id_map: Record<string, string> = {};
@@ -77,7 +76,7 @@ const ra_data_odata_server = async (
 
   return resource_id_mapper(
     {
-      getResources: () => Object.values(resources).map(r => r.Name),
+      getResources: () => Object.values(resources).map((r) => r.Name),
       getList: async (resource, params: GetRelatedParams) => {
         const { page, perPage } = params.pagination;
         const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
@@ -250,16 +249,18 @@ const ra_data_odata_server = async (
                 service: apiUrl,
               }).resource(resource);
 
-        return o.post(params.data, await option_callback()).then((resp: Response) => {
-          if (resp.statusCode >= 300) {
-            return Promise.reject(resp.body);
-          }
-          const json = JSON.parse(resp.body);
-          if (json.error) {
-            return Promise.reject(json.error.message);
-          }
-          return { data: json };
-        });
+        return o
+          .post(params.data, await option_callback())
+          .then((resp: Response) => {
+            if (resp.statusCode >= 300) {
+              return Promise.reject(resp.body);
+            }
+            const json = JSON.parse(resp.body);
+            if (json.error) {
+              return Promise.reject(json.error.message);
+            }
+            return { data: json };
+          });
       },
 
       delete: async (resource, params) =>
