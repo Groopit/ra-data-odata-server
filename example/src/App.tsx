@@ -10,8 +10,7 @@ import "./App.css";
 import odataProvider, { OdataDataProvider } from "ra-data-odata-server";
 import { useEffect, useState } from "react";
 
-const Northwind = "https://services.odata.org/v4/Northwind/Northwind.svc/";
-// const ODataSample = "https://services.odata.org/v4/OData/OData.svc/";
+const Northwind = "/v4/Northwind/Northwind.svc/";
 
 function App() {
   const [dataProvider, setDataProvider] = useState<OdataDataProvider>();
