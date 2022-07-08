@@ -1,5 +1,6 @@
 import {
   CreateParams,
+  CreateResult,
   DataProvider,
   DeleteManyParams,
   DeleteParams,
@@ -8,6 +9,7 @@ import {
   GetManyReferenceParams,
   GetOneParams,
   UpdateManyParams,
+  Record as RARecord,
   UpdateParams,
 } from "ra-core";
 
@@ -17,10 +19,26 @@ import {
  * @param param1  the object to be renamed, e.g. {UserId: "foo", Name: "John Smith"}
  * @returns the renamed object, e.g. {id: "foo", Name: "John Smith"}
  */
-const rename_to_id = (id_name: string, { [id_name]: ID, ...object }) => ({
-  id: ID,
-  ...object,
-});
+const rename_to_id = (
+  id_name: string,
+  { [id_name]: ID, ...object }
+): RARecord => {
+  return {
+    id: ID,
+    ...object,
+  };
+};
+
+/**
+ * Performs the opposite of rename_to_id for use by create() and update()
+ * @param id_name the original name of the property, e.g. 'UserID'
+ * @param object the object to be renamed, e.g. {id: "foo", Name: "John Smith"}
+ */
+const rename_from_id = (id_name: string, object: RARecord) => {
+  const renamed: { [x: string]: any } = { [id_name]: object.id, ...object };
+  delete renamed.id;
+  return renamed;
+};
 
 /**
  * Wraps a react-admin data provider and transforms the 'id' field in all input and
@@ -92,9 +110,14 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   wrapper.getMany = (resource: string, params: GetManyParams) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
-      console.log(`mapping id to ${id_name} for '${resource}`);
+      params.ids = params.ids.map((i) => (i === "id" ? id_name : i));
     }
-    return dataProvider.getMany(resource, params);
+    return dataProvider.getMany(resource, params).then((result) => {
+      return {
+        ...result,
+        data: result.data.map((v) => rename_to_id(id_name, v)),
+      } as any;
+    });
   };
 
   wrapper.getManyReference = (
@@ -103,7 +126,13 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   ) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
-      console.log(`mapping id to ${id_name} for '${resource}`);
+      console.log(`mapping id to ${id_name} for ${resource}`);
+      return dataProvider.getManyReference(resource, params).then((result) => {
+        return {
+          ...result,
+          data: result.data.map((v) => rename_to_id(id_name, v)),
+        } as any;
+      });
     }
     return dataProvider.getManyReference(resource, params);
   };
@@ -124,10 +153,20 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
     return dataProvider.updateMany(resource, params);
   };
 
-  wrapper.create = (resource: string, params: CreateParams) => {
+  wrapper.create = <RecordType extends RARecord = RARecord>(
+    resource: string,
+    params: CreateParams
+  ) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
+      params.data = rename_from_id(id_name, params.data);
+      return dataProvider.create(resource, params).then((result) => {
+        return {
+          ...result,
+          data: rename_to_id(id_name, result.data) as RecordType,
+        };
+      });
     }
     return dataProvider.create(resource, params);
   };
