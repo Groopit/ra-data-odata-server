@@ -1,17 +1,4 @@
-import {
-  CreateParams,
-  CreateResult,
-  DataProvider,
-  DeleteManyParams,
-  DeleteParams,
-  GetListParams,
-  GetManyParams,
-  GetManyReferenceParams,
-  GetOneParams,
-  UpdateManyParams,
-  Record as RARecord,
-  UpdateParams,
-} from "ra-core";
+import { DataProvider, Record as RARecord } from "ra-core";
 
 /**
  * clever little function that renames any property in an object to 'id'
@@ -19,14 +6,14 @@ import {
  * @param param1  the object to be renamed, e.g. {UserId: "foo", Name: "John Smith"}
  * @returns the renamed object, e.g. {id: "foo", Name: "John Smith"}
  */
-const rename_to_id = (
+const rename_to_id = <RecordType extends RARecord = RARecord>(
   id_name: string,
   { [id_name]: ID, ...object }
-): RARecord => {
+): RecordType => {
   return {
     id: ID,
     ...object,
-  };
+  } as RecordType;
 };
 
 /**
@@ -35,7 +22,7 @@ const rename_to_id = (
  * @param object the object to be renamed, e.g. {id: "foo", Name: "John Smith"}
  */
 const rename_from_id = (id_name: string, object: RARecord) => {
-  const renamed: { [x: string]: any } = { [id_name]: object.id, ...object };
+  const renamed: Omit<RARecord, "id"> = { [id_name]: object.id, ...object };
   delete renamed.id;
   return renamed;
 };
@@ -75,7 +62,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   id_map: Record<string, string>
 ): ProviderType {
   const wrapper: ProviderType = Object.create(dataProvider);
-  wrapper.getList = (resource: string, params: GetListParams) => {
+  wrapper.getList = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       if (params.sort.field === "id") {
@@ -85,13 +72,13 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
         return {
           ...result,
           data: result.data.map((v) => rename_to_id(id_name, v)),
-        } as any;
+        };
       });
     }
     return dataProvider.getList(resource, params);
   };
 
-  wrapper.getOne = (resource: string, params: GetOneParams) => {
+  wrapper.getOne = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       if (params.id === "id") {
@@ -101,13 +88,13 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
         return {
           ...result,
           data: rename_to_id(id_name, result.data),
-        } as any;
+        };
       });
     }
     return dataProvider.getOne(resource, params);
   };
 
-  wrapper.getMany = (resource: string, params: GetManyParams) => {
+  wrapper.getMany = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       params.ids = params.ids.map((i) => (i === "id" ? id_name : i));
@@ -116,28 +103,24 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
       return {
         ...result,
         data: result.data.map((v) => rename_to_id(id_name, v)),
-      } as any;
+      };
     });
   };
 
-  wrapper.getManyReference = (
-    resource: string,
-    params: GetManyReferenceParams
-  ) => {
+  wrapper.getManyReference = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
-      console.log(`mapping id to ${id_name} for ${resource}`);
       return dataProvider.getManyReference(resource, params).then((result) => {
         return {
           ...result,
           data: result.data.map((v) => rename_to_id(id_name, v)),
-        } as any;
+        };
       });
     }
     return dataProvider.getManyReference(resource, params);
   };
 
-  wrapper.update = (resource: string, params: UpdateParams) => {
+  wrapper.update = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
@@ -145,7 +128,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
     return dataProvider.update(resource, params);
   };
 
-  wrapper.updateMany = (resource: string, params: UpdateManyParams) => {
+  wrapper.updateMany = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
@@ -153,25 +136,21 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
     return dataProvider.updateMany(resource, params);
   };
 
-  wrapper.create = <RecordType extends RARecord = RARecord>(
-    resource: string,
-    params: CreateParams
-  ) => {
+  wrapper.create = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
-      console.log(`mapping id to ${id_name} for '${resource}`);
       params.data = rename_from_id(id_name, params.data);
       return dataProvider.create(resource, params).then((result) => {
         return {
           ...result,
-          data: rename_to_id(id_name, result.data) as RecordType,
+          data: rename_to_id(id_name, result.data),
         };
       });
     }
     return dataProvider.create(resource, params);
   };
 
-  wrapper.delete = (resource: string, params: DeleteParams) => {
+  wrapper.delete = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
@@ -179,7 +158,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
     return dataProvider.delete(resource, params);
   };
 
-  wrapper.deleteMany = (resource: string, params: DeleteManyParams) => {
+  wrapper.deleteMany = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
       console.log(`mapping id to ${id_name} for '${resource}`);
