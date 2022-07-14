@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.0.0
+
+- Major version as there are breaking changes
+- Add support for react-admin 4.x, drop 3.x
+- Switch from odata-client to @odata/client package
+- Add OData action support
+- Add an example react-admin 4.x site
+- Use a proxy for example sites to avoid CORS issues
+- Fix some ID remapping issues
+
 ## v2.2.1
 
 - Put odata-client back to 0.6.16 since the new got dependency breaks the browser
