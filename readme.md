@@ -53,6 +53,32 @@ function App() {
 
 See the [example directory](https://github.com/Groopit/ra-data-odata-server/tree/main/example) for a complete working react-admin solution that runs against the Northwind odata service.
 
+### OData Actions
+
+This provider has built-in support for invoking OData actions. This works with react-admin's
+mutation support. For example, if you had an 'Approve' action for an OData comment, you could
+invoke it like this:
+
+```ts
+import * as React from "react";
+import { useMutation } from "react-query";
+import { useDataProvider, Button } from "react-admin";
+
+const ApproveButton = ({ record }) => {
+  const dataProvider = useDataProvider();
+  const { mutate, isLoading } = useMutation(() =>
+    dataProvider.action("comments", {
+      id: record.id,
+      action: "approve",
+      payload: { isApproved: true },
+    })
+  );
+  return (
+    <Button label="Approve" onClick={() => mutate()} disabled={isLoading} />
+  );
+};
+```
+
 ### Child relationships
 
 OData supports hierarchical relationships - e.g. `/Customers('ALFKI')/Orders` returns all the order entities related to the customer with ID 'ALFKI'. In order to support this type of query in react-admin, the `getManyReferences()` filter is enhanced with a 'parent' property. You can pass this to the standard \<ReferenceManyField> react-admin component. For example, when the current record is a customer, you can display all that customer's orders with this syntax

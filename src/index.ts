@@ -17,11 +17,6 @@ import { OData, param, EdmV4, ODataQueryParam } from "@odata/client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
 
-interface GetRelatedParams extends GetListParams {
-  id?: string;
-  related?: string;
-}
-
 async function get_entities(url: string, options: ODataRequestOptions) {
   const m = await fetch(url + "/$metadata", options);
   const t = await m.text();
@@ -29,8 +24,15 @@ async function get_entities(url: string, options: ODataRequestOptions) {
   return parse_metadata(t);
 }
 
+export interface ActionParams {
+  action: string;
+  id: Identifier;
+  payload: any;
+}
+
 export interface OdataDataProvider extends DataProvider {
   getResources: () => string[];
+  action: (resource: string, params: ActionParams) => Promise<any>;
 }
 
 interface ODataRequestOptions {
@@ -119,7 +121,7 @@ const ra_data_odata_server = async (
       getResources: () => Object.values(resources).map((r) => r.Name),
       getList: async <RecordType extends RARecord = RARecord>(
         resource: string,
-        params: GetRelatedParams
+        params: GetListParams
       ) => {
         const { page, perPage } = params.pagination;
         const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
@@ -140,9 +142,6 @@ const ra_data_odata_server = async (
               .eq(true)
           );
         }
-        if (params.related) {
-          p = p.expand(params.related);
-        }
         const resp = await client.newRequest<RecordType>({
           collection: resource,
           params: p,
@@ -157,16 +156,6 @@ const ra_data_odata_server = async (
           data: resp.value ?? [],
           total: resp["@odata.count"] ?? 0,
         };
-
-        // if (params.id) {
-        //   o = o.resource(resource, params.id);
-        // } else {
-
-        //   return {
-        //     data: json.value,
-        //     total: json["@odata.count"],
-        //   };
-        // });
       },
 
       getOne: async <RecordType extends RARecord = RARecord>(
@@ -286,6 +275,21 @@ const ra_data_odata_server = async (
         await Promise.all(results);
 
         return { data: params.ids };
+      },
+      action: async (
+        resource: string,
+        params: { id: Identifier; action: string; payload: any }
+      ): Promise<any> => {
+        const res = resources[resource.toLowerCase()];
+        const keyName = res?.Key?.Name ?? "UnknownKey";
+        const client = await getClient();
+        const es = client.getEntitySet(resource);
+
+        return await es.action(
+          params.action,
+          getproperty_identifier(resource, keyName, params.id),
+          params.payload
+        );
       },
     },
     id_map

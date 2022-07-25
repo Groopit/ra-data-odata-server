@@ -229,3 +229,22 @@ test("Get Products by parent Category", async () => {
     Discontinued: false,
   });
 });
+
+test("Actions creates a POST request", async () => {
+  const provider = await odataProvider(Northwind);
+
+  await provider.action("Customers", {
+    id: "ROMEY",
+    action: "AddFlierMiles",
+    payload: {
+      miles: 100,
+    },
+  });
+
+  expect(fetchMock.mock.calls[1][0]).toEqual(
+    Northwind + "/Customers('ROMEY')/AddFlierMiles"
+  );
+  expect(fetchMock.mock.calls[1][1]?.method).toEqual("POST");
+  const body = fetchMock.mock.calls[1][1]?.body?.toString() ?? "";
+  expect(JSON.parse(body)).toEqual({ miles: 100 });
+});
