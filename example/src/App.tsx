@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Admin,
   ListGuesser,
@@ -10,7 +11,7 @@ import "./App.css";
 import odataProvider, { OdataDataProvider } from "ra-data-odata-server";
 import { useEffect, useState } from "react";
 
-const Northwind = "/v4/Northwind/Northwind.svc/";
+const Northwind = "/V4/Northwind/Northwind.svc";
 
 function App() {
   const [dataProvider, setDataProvider] = useState<OdataDataProvider>();
@@ -34,5 +35,4 @@ function App() {
     <Loading></Loading>
   );
 }
-
 export default App;

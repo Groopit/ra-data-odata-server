@@ -51,7 +51,7 @@ function App() {
 }
 ```
 
-See the [example directory](https://github.com/Groopit/ra-data-odata-server/tree/main/example) for a complete working react-admin solution that runs against the Northwind odata service.
+See the [example directory](https://github.com/Groopit/ra-data-odata-server/tree/main/example) for a complete working react-admin 4.x solution that runs against the Northwind odata service.
 
 ### OData Actions
 
@@ -100,9 +100,8 @@ This also supports many-to-many relationships without requiring that your servic
 
 ## Authentication hook
 
-To support OData servers that require authentication, you can provide an options callback when creating the data provider. This will get called before each query and must return a `Promise<RequestInit>`.
-Usually just adding an Authorization header is sufficient, but you can override any of the [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request/Request) options. For example, if you have
-a `getAccessToken()` function that returns a `Promise<string>` you would initialize your provider like this.
+To support OData servers that require authentication, you can provide an options callback when creating the data provider. This will get called before each query and must return a `ODataRequestOptions`. The `headers` property of this object will be added to each outgoing
+HTTP request. For example, if you have a `getAccessToken()` function that returns a `Promise<string>` you would initialize your provider like this.
 
 ```ts
 odataProvider("https://myodataservice.com/odata", () => {

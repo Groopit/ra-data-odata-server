@@ -1,4 +1,4 @@
-import { DataProvider, Record as RARecord } from "ra-core";
+import { DataProvider, RaRecord } from "ra-core";
 
 /**
  * clever little function that renames any property in an object to 'id'
@@ -6,7 +6,7 @@ import { DataProvider, Record as RARecord } from "ra-core";
  * @param param1  the object to be renamed, e.g. {UserId: "foo", Name: "John Smith"}
  * @returns the renamed object, e.g. {id: "foo", Name: "John Smith"}
  */
-const rename_to_id = <RecordType extends RARecord = RARecord>(
+const rename_to_id = <RecordType extends RaRecord = RaRecord>(
   id_name: string,
   { [id_name]: ID, ...object }
 ): RecordType => {
@@ -21,8 +21,8 @@ const rename_to_id = <RecordType extends RARecord = RARecord>(
  * @param id_name the original name of the property, e.g. 'UserID'
  * @param object the object to be renamed, e.g. {id: "foo", Name: "John Smith"}
  */
-const rename_from_id = (id_name: string, object: RARecord) => {
-  const renamed: Omit<RARecord, "id"> = { [id_name]: object.id, ...object };
+const rename_from_id = (id_name: string, object: RaRecord) => {
+  const renamed: Omit<RaRecord, "id"> = { [id_name]: object.id, ...object };
   delete renamed.id;
   return renamed;
 };

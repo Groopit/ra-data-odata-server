@@ -10,8 +10,9 @@ import {
   GetOneParams,
   HttpError,
   Identifier,
-  Record as RARecord,
+  RaRecord,
   UpdateParams,
+  UpdateResult,
 } from "ra-core";
 import { OData, param, EdmV4, ODataQueryParam } from "@odata/client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
@@ -30,10 +31,10 @@ export interface ActionParams {
   payload: any;
 }
 
-export interface OdataDataProvider extends DataProvider {
+export type OdataDataProvider = DataProvider<string> & {
   getResources: () => string[];
   action: (resource: string, params: ActionParams) => Promise<any>;
-}
+};
 
 interface ODataRequestOptions {
   headers?: Record<string, string>;
@@ -88,7 +89,7 @@ const ra_data_odata_server = async (
     return client;
   };
 
-  const getEntity = async <RecordType extends RARecord = RARecord>(
+  const getEntity = async <RecordType extends RaRecord = RaRecord>(
     resource: string,
     id: Identifier,
     params?: ODataQueryParam
@@ -103,7 +104,7 @@ const ra_data_odata_server = async (
       params
     );
   };
-  const getEntities = async <RecordType extends RARecord = RARecord>(
+  const getEntities = async <RecordType extends RaRecord = RaRecord>(
     resource: string,
     params: ODataQueryParam
   ) => {
@@ -116,10 +117,10 @@ const ra_data_odata_server = async (
     return { data: result.value ?? [], total: result["@odata.count"] ?? 0 };
   };
 
-  return resource_id_mapper(
+  return resource_id_mapper<OdataDataProvider>(
     {
       getResources: () => Object.values(resources).map((r) => r.Name),
-      getList: async <RecordType extends RARecord = RARecord>(
+      getList: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
         params: GetListParams
       ) => {
@@ -158,14 +159,14 @@ const ra_data_odata_server = async (
         };
       },
 
-      getOne: async <RecordType extends RARecord = RARecord>(
+      getOne: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
         params: GetOneParams
       ) => {
         return { data: await getEntity<RecordType>(resource, params.id) };
       },
 
-      getMany: async <RecordType extends RARecord = RARecord>(
+      getMany: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
         params: GetManyParams
       ) => {
@@ -176,7 +177,7 @@ const ra_data_odata_server = async (
         return { data: val2 };
       },
 
-      getManyReference: async <RecordType extends RARecord = RARecord>(
+      getManyReference: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
         params: GetManyReferenceParams
       ) => {
@@ -214,7 +215,7 @@ const ra_data_odata_server = async (
         }
       },
 
-      update: async <RecordType extends RARecord = RARecord>(
+      update: async <RecordType extends RaRecord = any>(
         resource: string,
         params: UpdateParams<RecordType>
       ) => {
@@ -227,14 +228,17 @@ const ra_data_odata_server = async (
           getproperty_identifier(resource, keyName, params.id),
           params.data
         );
+        const ret: UpdateResult<any> = {
+          data: params.data,
+        };
 
-        return { data: params.data };
+        return ret;
       },
 
       updateMany: (resource, params) =>
         Promise.reject(new Error("not implemented")),
 
-      create: async <RecordType extends RARecord = RARecord>(
+      create: async <RecordType extends RaRecord = any>(
         resource: string,
         params: CreateParams<RecordType>
       ) => {
@@ -246,7 +250,7 @@ const ra_data_odata_server = async (
         return { data: data };
       },
 
-      delete: async <RecordType extends RARecord = RARecord>(
+      delete: async <RecordType extends RaRecord = any>(
         resource: string,
         params: DeleteParams
       ) => {
@@ -259,7 +263,7 @@ const ra_data_odata_server = async (
         return { data: { id: params.id } as RecordType };
       },
 
-      deleteMany: async <RecordType extends RARecord = RARecord>(
+      deleteMany: async <RecordType extends RaRecord = any>(
         resource: string,
         params: DeleteManyParams
       ): Promise<DeleteManyResult> => {
