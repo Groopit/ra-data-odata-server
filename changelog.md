@@ -1,5 +1,9 @@
 # Changelog
 
+## v3.0.1
+
+- Move ra-core from devDependencies to Dependencies
+
 ## v3.0.0
 
 - Major version as there are breaking changes
