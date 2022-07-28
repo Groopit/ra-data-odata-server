@@ -1,5 +1,9 @@
 # Changelog
 
+## v3.0.2
+
+- fix bug where update() wasn't returning the new record
+
 ## v3.0.1
 
 - Move ra-core from devDependencies to Dependencies
