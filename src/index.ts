@@ -228,11 +228,11 @@ const ra_data_odata_server = async (
           getproperty_identifier(resource, keyName, params.id),
           params.data
         );
-        const ret: UpdateResult<any> = {
-          data: params.data,
+        return {
+          data: await es.retrieve(
+            getproperty_identifier(resource, keyName, params.id)
+          ),
         };
-
-        return ret;
       },
 
       updateMany: (resource, params) =>
