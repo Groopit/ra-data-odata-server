@@ -1,4 +1,4 @@
-import { parse_metadata } from "./metadata_parser";
+import { EntityProperty, parse_metadata } from "./metadata_parser";
 import fs from "fs";
 
 const nw = fs.readFileSync("./test/metadata/Northwind.metadata.xml").toString();
@@ -33,6 +33,26 @@ test("OData metadata", () => {
   expect(entities.persondetails).toBeDefined();
   expect(entities.advertisements).toBeDefined();
   expect(entities.categories).toBeDefined();
+});
+
+const derived = odata.replace(
+  '<EntitySet Name="Persons" EntityType="ODataDemo.Person">',
+  '<EntitySet Name="Customers" EntityType="ODataDemo.Customer">'
+);
+
+test("Derived Entity Types", () => {
+  const entities = parse_metadata(derived);
+  expect(entities.customers).toBeDefined();
+  expect(entities.customers.Type).toBeDefined();
+  expect(entities.customers.Type.Key).toBeDefined();
+  expect(entities.customers.Type.Property).toContainEqual<EntityProperty>({
+    Name: "TotalExpense",
+    Type: "Edm.Decimal",
+  });
+  expect(entities.customers.Type.Property).toContainEqual<EntityProperty>({
+    Name: "ID",
+    Type: "Edm.Int32",
+  });
 });
 
 const edm = fs.readFileSync("./test/metadata/edm.metadata.xml").toString();

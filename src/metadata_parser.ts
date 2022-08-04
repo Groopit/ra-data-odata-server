@@ -1,11 +1,11 @@
 import Parser from "fast-xml-parser";
 
-interface EntityProperty {
+export interface EntityProperty {
   Name: string;
   Type: string;
 }
 
-interface EntityType {
+export interface EntityType {
   Property: EntityProperty[];
   Key?: EntityProperty;
 }
@@ -32,15 +32,36 @@ export function parse_metadata(t: string): Record<string, EntitySet> {
       // Skip entity types with no key or with a compound key
       // as react-admin doesn't support such things
       //
-      if (e.Key && !Array.isArray(e.Key.PropertyRef)) {
+      if ((e.Key && !Array.isArray(e.Key.PropertyRef)) || e._BaseType) {
         const name = `${namespace}.${e._Name}`;
-        const properties: [EntityProperty] = e.Property.map((p: any) => ({
-          Name: p._Name,
-          Type: p._Type,
-        }));
+        const properties: [EntityProperty] =
+          (e.Property &&
+            (e.Property instanceof Array ? e.Property : [e.Property]).map(
+              (p: any) => ({
+                Name: p._Name,
+                Type: p._Type,
+              })
+            )) ??
+          [];
         entities[name] = {
           Property: properties,
-          Key: properties.find((p) => p.Name === e.Key.PropertyRef._Name),
+          Key: properties.find((p) => p.Name === e.Key?.PropertyRef?._Name),
+        };
+      }
+    }
+  }
+  //
+  // Handle derived entity types
+  //
+  for (const schema of metadata.Edmx.DataServices.Schema) {
+    for (const d of (schema.EntityType ?? []).filter((e: any) => e._BaseType)) {
+      const namespace = schema._Namespace;
+      const base = entities[d._BaseType];
+      if (base) {
+        const name = `${namespace}.${d._Name}`;
+        entities[name] = {
+          Property: [...base.Property, ...entities[name].Property],
+          Key: base.Key,
         };
       }
     }
