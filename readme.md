@@ -6,7 +6,7 @@ OData Data Provider for [react-admin](https://github.com/marmelab/react-admin), 
 
 - Parses OData $metadata and creates a list of EntitySets which can be displayed as react-admin \<Resources\>
 - Transparently renames entity keys to 'id' fields so they can be used by react-admin.
-- Handles scalar keys (Edm.Int32 and Edm.Guid) correctly so you can directly use EntitySets with integer or guid keys.
+- Handles scalar keys (Edm.Int16, Edm.Int32, Edm.Int64 and Edm.Guid) correctly so you can directly use EntitySets with integer or guid keys.
 - extends the react-admin `getManyReference()` method to support expanding child relations.
 
 ## Installation

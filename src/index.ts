@@ -74,7 +74,7 @@ const ra_data_odata_server = async (
     )?.Type;
     if (type === "Edm.Guid") {
       return EdmV4.Guid.from(id as string);
-    } else if (type === "Edm.Int32" && typeof id !== "number") {
+    } else if (type?.startsWith("Edm.Int") && typeof id !== "number") {
       return parseInt(id);
     }
     return id;
