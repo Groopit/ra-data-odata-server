@@ -100,16 +100,52 @@ This also supports many-to-many relationships without requiring that your servic
 
 ## Authentication hook
 
-To support OData servers that require authentication, you can provide an options callback when creating the data provider. This will get called before each query and must return a `ODataRequestOptions`. The `headers` property of this object will be added to each outgoing
+To support OData servers that require authentication, you can provide an options callback when creating the data provider. This will get called before each query and must return a `Partial<ODataNewOptions>`. Notably the `commonHeaders` property of this object will be added to each outgoing
 HTTP request. For example, if you have a `getAccessToken()` function that returns a `Promise<string>` you would initialize your provider like this.
 
 ```ts
 odataProvider("https://myodataservice.com/odata", () => {
   return getAccessToken().then((token) => ({
-    headers: {
+    commonHeaders: {
       Authorization: "Bearer " + token,
     },
   }));
+}).then((provider) => setDataProvider(provider));
+```
+
+## Fetch proxy interface
+
+If your authentication requires more than just a header (cookie-based authentication, for instance) you can provide a
+[fetchProxy](https://github.com/Soontao/light-odata/blob/HEAD/docs/Advanced.md#fetch-proxy) property which can implement
+any fetch() behavior you need.
+
+```ts
+odataProvider("https://myodataservice.com/odata", () => {
+  fetchProxy: async (url, init) => {
+    // just add some transform here
+    // for example, add headers, change url, rate limit, retry ...
+    const response = await fetch(url, {
+      method: init.method,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Some-Custom": "Header",
+      },
+    });    let content: any;
+    if (
+      //
+      // Check to see if the returned content is JSON
+      //
+      response.headers
+        .get("content-type")
+        ?.indexOf("application/json") !== -1
+    ) {
+      content = await response.json();
+    } else {
+      content = await response.text();
+    }
+    return { content, response }; // the content is an object
+  },
 }).then((provider) => setDataProvider(provider));
 ```
 
