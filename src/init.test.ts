@@ -1,6 +1,7 @@
 import fs from "fs";
 import odataProvider from "./index";
 import { enableFetchMocks } from "jest-fetch-mock";
+import { ODataNewOptions } from "@odata/client";
 enableFetchMocks();
 
 const Northwind = "https://services.odata.org/v4/Northwind/Northwind.svc";
@@ -182,7 +183,7 @@ test("Get many referenced Products from Northwind", async () => {
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
     Northwind +
-      "/Products?$filter=CategoryID eq 1&$orderby=ProductName asc&$top=10&$count=true"
+    "/Products?$filter=CategoryID eq 1&$orderby=ProductName asc&$top=10&$count=true"
   );
 });
 
@@ -247,4 +248,57 @@ test("Actions creates a POST request", async () => {
   expect(fetchMock.mock.calls[1][1]?.method).toEqual("POST");
   const body = fetchMock.mock.calls[1][1]?.body?.toString() ?? "";
   expect(JSON.parse(body)).toEqual({ miles: 100 });
+});
+
+test("Custom fetch proxy", async () => {
+  const customOptions = async (): Promise<Partial<ODataNewOptions>> => ({
+    fetchProxy: async (url, init) => {
+      const response = await fetch(url, {
+        method: init.method,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'text/plain',
+          'X-Some-Custom': 'Header',
+        },
+      });
+
+      let content: any;
+      if (url.endsWith("/$metadata"))
+        // metadata needs to be parsed as text
+        content = await response.text();
+      else
+        // all other content needs to be parsed as json
+        content = await response.json();
+
+      return {
+        response,
+        content,
+      };
+    },
+  })
+
+  const provider = await odataProvider(Northwind, customOptions);
+  fetchMock.mockOnce(
+    fs.readFileSync("./test/service/Categories.json").toString(),
+    { headers: { "Content-Type": "application/json" } }
+  );
+  const { data } = await provider.getList("Categories", {
+    pagination: { page: 1, perPage: 15 },
+    sort: { field: "CategoryID", order: "asc" },
+    filter: null,
+  });
+  expect(fetchMock.mock.calls[1][0]).toEqual(
+    Northwind + "/Categories?$orderby=CategoryID asc&$top=15&$count=true"
+  );
+  expect(fetchMock.mock.calls[1][1]?.method).toEqual("GET");
+  expect(fetchMock.mock.calls[1][1]?.credentials).toEqual('include');
+  expect(fetchMock.mock.calls[1][1]?.headers).toEqual({
+    'Content-Type': 'text/plain',
+    'X-Some-Custom': 'Header',
+  });
+  expect(data[0]).toMatchObject({
+    id: 1,
+    CategoryName: "Beverages",
+    Description: "Soft drinks, coffees, teas, beers, and ales",
+  });
 });

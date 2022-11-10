@@ -14,13 +14,26 @@ import {
   UpdateParams,
   UpdateResult,
 } from "ra-core";
-import { OData, param, EdmV4, ODataQueryParam } from "@odata/client";
+import { OData, param, EdmV4, ODataQueryParam, ODataNewOptions } from "@odata/client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
 
-async function get_entities(url: string, options: ODataRequestOptions) {
-  const m = await fetch(url + "/$metadata", options);
-  const t = await m.text();
+async function get_entities(url: string, odata_options?: Partial<ODataNewOptions>) {
+  let t: string;
+  url += "/$metadata";
+
+  if (odata_options?.fetchProxy)
+    // content needs to be a string in order to be correctly passed to parse_metadata
+    // TODO: document this
+    t = (await odata_options.fetchProxy(url, {})).content;
+  else {
+    const m = await fetch(url, {
+      // passing common_headers to fetch function here as this might be required 
+      // for token-based authentication
+      headers: odata_options?.commonHeaders,
+    });
+    t = await m.text();
+  }
 
   return parse_metadata(t);
 }
@@ -36,16 +49,13 @@ export type OdataDataProvider = DataProvider<string> & {
   action: (resource: string, params: ActionParams) => Promise<any>;
 };
 
-interface ODataRequestOptions {
-  headers?: Record<string, string>;
-}
-
 const ra_data_odata_server = async (
   apiUrl: string,
-  option_callback: () => Promise<ODataRequestOptions> = () =>
+  odata_options_callback: () => Promise<Partial<ODataNewOptions>> = () =>
     Promise.resolve({})
 ): Promise<OdataDataProvider> => {
-  const resources = await get_entities(apiUrl, await option_callback());
+  const options = await odata_options_callback();
+  const resources = await get_entities(apiUrl, options);
   const id_map: Record<string, string> = {};
   for (const r in resources) {
     const id_name = resources[r]?.Key?.Name ?? "id";
@@ -81,10 +91,10 @@ const ra_data_odata_server = async (
   }
 
   const getClient = async () => {
-    const commonHeaders = (await option_callback()).headers;
+    const options = (await odata_options_callback());
     const client = OData.New4({
       metadataUri: apiUrl + "/$metadata",
-      commonHeaders,
+      ...options,
     });
     return client;
   };
