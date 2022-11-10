@@ -1,5 +1,14 @@
 # Changelog
 
+## v4.0.0
+
+- **BREAKING CHANGE** If you were returning the `headers` property in the options callback,
+  this property name has changed to `commonHeaders` for compatibility with the underlying @odata/client
+  library
+- Add support for returning a `fetchProxy` to allow users complete control over the fetch operation. Fixes
+  #11 and #13. Thanks to @gebsl for the contribution!
+- Add support for `Edm.Int16` and `Edm.Int64` identifiers. Fixes #12, thanks again to @gebsl!
+
 ## v3.0.2
 
 - fix bug where update() wasn't returning the new record
