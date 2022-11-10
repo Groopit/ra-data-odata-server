@@ -14,21 +14,24 @@ import {
   UpdateParams,
   UpdateResult,
 } from "ra-core";
-import { OData, param, EdmV4, ODataQueryParam, ODataNewOptions, FetchProxy } from "@odata/client";
+import { OData, param, EdmV4, ODataQueryParam, ODataNewOptions } from "@odata/client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
 
-async function get_entities(url: string, fetchProxy?: FetchProxy) {
+async function get_entities(url: string, odata_options?: Partial<ODataNewOptions>) {
   let t: string;
   url += "/$metadata";
 
-  if (fetchProxy)
+  if (odata_options?.fetchProxy)
     // content needs to be a string in order to be correctly passed to parse_metadata
     // TODO: document this
-    // TODO: test case
-    t = (await fetchProxy(url, {})).content;
+    t = (await odata_options.fetchProxy(url, {})).content;
   else {
-    const m = await fetch(url);
+    const m = await fetch(url, {
+      // passing common_headers to fetch function here as this might be required 
+      // for token-based authentication
+      headers: odata_options?.commonHeaders,
+    });
     t = await m.text();
   }
 
@@ -52,7 +55,7 @@ const ra_data_odata_server = async (
     Promise.resolve({})
 ): Promise<OdataDataProvider> => {
   const options = await odata_options_callback();
-  const resources = await get_entities(apiUrl, options.fetchProxy);
+  const resources = await get_entities(apiUrl, options);
   const id_map: Record<string, string> = {};
   for (const r in resources) {
     const id_name = resources[r]?.Key?.Name ?? "id";
