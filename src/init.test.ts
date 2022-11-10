@@ -257,7 +257,7 @@ test("Custom fetch proxy", async () => {
         method: init.method,
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
           'X-Some-Custom': 'Header',
         },
       });
@@ -291,6 +291,11 @@ test("Custom fetch proxy", async () => {
     Northwind + "/Categories?$orderby=CategoryID asc&$top=15&$count=true"
   );
   expect(fetchMock.mock.calls[1][1]?.method).toEqual("GET");
+  expect(fetchMock.mock.calls[1][1]?.credentials).toEqual('include');
+  expect(fetchMock.mock.calls[1][1]?.headers).toEqual({
+    'Content-Type': 'text/plain',
+    'X-Some-Custom': 'Header',
+  });
   expect(data[0]).toMatchObject({
     id: 1,
     CategoryName: "Beverages",
