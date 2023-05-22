@@ -34,8 +34,8 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
-    "ra-core": "^4.2.0",
-    "@odata/client": "^2.20.0",
-    "fast-xml-parser": "^3.19.0"
+    "@odata/client": "^2.21.6",
+    "fast-xml-parser": "^3.19.0",
+    "ra-core": "^4.2.0"
   }
 }

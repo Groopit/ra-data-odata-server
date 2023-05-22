@@ -12,13 +12,21 @@ import {
   Identifier,
   RaRecord,
   UpdateParams,
-  UpdateResult,
 } from "ra-core";
-import { OData, param, EdmV4, ODataQueryParam, ODataNewOptions, ODataFilter } from "@odata/client";
+import {
+  OData,
+  EdmV4,
+  SystemQueryOptions,
+  ODataNewOptions,
+  ODataFilter,
+} from "@odata/client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
 
-async function get_entities(url: string, odata_options?: Partial<ODataNewOptions>) {
+async function get_entities(
+  url: string,
+  odata_options?: Partial<ODataNewOptions>
+) {
   let t: string;
   url += "/$metadata";
 
@@ -28,7 +36,7 @@ async function get_entities(url: string, odata_options?: Partial<ODataNewOptions
     t = (await odata_options.fetchProxy(url, {})).content;
   else {
     const m = await fetch(url, {
-      // passing common_headers to fetch function here as this might be required 
+      // passing common_headers to fetch function here as this might be required
       // for token-based authentication
       headers: odata_options?.commonHeaders,
     });
@@ -91,7 +99,7 @@ const ra_data_odata_server = async (
   }
 
   const getClient = async () => {
-    const options = (await odata_options_callback());
+    const options = await odata_options_callback();
     const client = OData.New4({
       metadataUri: apiUrl + "/$metadata",
       ...options,
@@ -102,7 +110,7 @@ const ra_data_odata_server = async (
   const getEntity = async <RecordType extends RaRecord = RaRecord>(
     resource: string,
     id: Identifier,
-    params?: ODataQueryParam
+    params?: SystemQueryOptions
   ) => {
     const res = resources[resource.toLowerCase()];
     const keyName = res?.Key?.Name ?? "UnknownKey";
@@ -116,7 +124,7 @@ const ra_data_odata_server = async (
   };
   const getEntities = async <RecordType extends RaRecord = RaRecord>(
     resource: string,
-    params: ODataQueryParam
+    params: SystemQueryOptions
   ) => {
     const client = await getClient();
     const result = await client.newRequest<RecordType>({
@@ -138,7 +146,7 @@ const ra_data_odata_server = async (
         const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
         const client = await getClient();
 
-        let p = param()
+        let p = new SystemQueryOptions()
           .count()
           .orderby(field, order === "DESC" ? "desc" : "asc")
           .skip((page - 1) * perPage)
@@ -146,7 +154,7 @@ const ra_data_odata_server = async (
 
         let filter: ODataFilter | undefined = undefined;
         for (const filterName in params.filter) {
-          const lastUnderscoreIndex = filterName.lastIndexOf('_');
+          const lastUnderscoreIndex = filterName.lastIndexOf("_");
           // last part of split items tells us what kind
           // of filter should be applied
           // as described here: https://marmelab.com/react-admin/FilteringTutorial.html#filter-operators
@@ -154,28 +162,32 @@ const ra_data_odata_server = async (
           const propName = filterName.slice(0, lastUnderscoreIndex);
           const filterBuilder = client.newFilter().property(propName);
           const filterValue = params.filter[filterName];
-          
+
           switch (filterType) {
-            case 'neq':
-              filter = filterBuilder.ne(filterValue); break;
-            case 'eq':
-              filter = filterBuilder.eq(filterValue); break;
-            case 'lte':
-              filter = filterBuilder.le(filterValue); break;
-            case 'lt':
-              filter = filterBuilder.lt(filterValue); break;
-            case 'gte':
-              filter = filterBuilder.ge(filterValue); break;
-            case 'gt':
-              filter = filterBuilder.gt(filterValue); break;
+            case "neq":
+              filter = filterBuilder.ne(filterValue);
+              break;
+            case "eq":
+              filter = filterBuilder.eq(filterValue);
+              break;
+            case "lte":
+              filter = filterBuilder.le(filterValue);
+              break;
+            case "lt":
+              filter = filterBuilder.lt(filterValue);
+              break;
+            case "gte":
+              filter = filterBuilder.ge(filterValue);
+              break;
+            case "gt":
+              filter = filterBuilder.gt(filterValue);
+              break;
             default:
               // this default filter was kept for compatibility reasons with
               // ra-data-odata-server@<=4.0.0
               filter = client
                 .newFilter()
-                .property(
-                  `Contains(${filterName},'${filterValue}')`
-                )
+                .property(`Contains(${filterName},'${filterValue}')`)
                 .eq(true);
           }
 
@@ -225,7 +237,7 @@ const ra_data_odata_server = async (
           return Promise.resolve({ data: [], total: 0 });
         }
         if (params.filter.parent) {
-          const odataParams = OData.newParam().expand(params.target);
+          const odataParams = OData.newOptions().expand(params.target);
           const o = await getEntity<RecordType>(
             params.filter.parent,
             params.id,
