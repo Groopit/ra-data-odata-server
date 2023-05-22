@@ -80,10 +80,10 @@ test("Get Customer from Northwind by ID", async () => {
 
 test("Update Customer from Northwind by ID", async () => {
   const provider = await odataProvider(Northwind);
-  await provider.update("Customers", { id: "ALFKI", data: {ContactName: "Mock User" }, previousData: {}});
+  await provider.update("Customers", { id: "ALFKI", data: { ContactName: "Mock User" }, previousData: {} });
   expect(fetchMock.mock.calls[1][0]).toEqual(Northwind + "/Customers('ALFKI')");
   expect(fetchMock.mock.calls[1][1]?.method).toEqual("PATCH");
-  expect(fetchMock.mock.calls[1][1]?.body).toEqual(JSON.stringify({ContactName: "Mock User" }));
+  expect(fetchMock.mock.calls[1][1]?.body).toEqual(JSON.stringify({ ContactName: "Mock User" }));
 });
 
 
