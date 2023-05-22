@@ -53,6 +53,39 @@ function App() {
 
 See the [example directory](https://github.com/Groopit/ra-data-odata-server/tree/main/example) for a complete working react-admin 4.x solution that runs against the Northwind odata service.
 
+### List Filters
+
+This provider has support for [react-admin filter operators](https://marmelab.com/react-admin/FilteringTutorial.html#filter-operators). By appending an underscore and operator name to an identifier, you can override the default 'Contains' operator. The following operators are supported
+
+Suffix | [OData filter](http://docs.oasis-open.org/odata/odata/v4.0/errata03/os/complete/part2-url-conventions/odata-v4.0-errata03-os-part2-url-conventions-complete.html#_Filter_System_Query) | example
+---|---|---|
+_neq| ne | `filter: {email_neq: "test@example.com"}`
+_eq| eq | `filter: {name_eq: "John Smith"}`
+_lte| le | `filter: {price_lte: 0.99}`
+_lt| lt | `filter: {price_lt: 1}`
+_gte| ge | `filter: {price_gte: 1}`
+_gt| gt | `filter: {quantity_gt: 10}`
+
+If a suffix operator is not supplied, then the default filter operator is `Contains` to search a field for a substring.
+
+Multiple filters can also be combined and used directly with the [`<List>`](https://marmelab.com/react-admin/List.html) component.
+
+```ts
+<List resource="posts"
+    filter={{
+      author_eq: "John Smith",
+      published_at_gte: "2020-01-01T23:59:59.99Z"
+    }}>
+    <Datagrid rowClick="show">
+      <TextField source="id" />
+      <TextField source="title" />
+      <DateField source="published_at" />
+      <TextField source="category" />
+      <BooleanField source="commentable" />
+    </Datagrid>
+</List>
+```
+
 ### OData Actions
 
 This provider has built-in support for invoking OData actions. This works with react-admin's
