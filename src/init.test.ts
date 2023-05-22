@@ -78,6 +78,15 @@ test("Get Customer from Northwind by ID", async () => {
   expect(fetchMock.mock.calls[1][1]?.method).toEqual("GET");
 });
 
+test("Update Customer from Northwind by ID", async () => {
+  const provider = await odataProvider(Northwind);
+  await provider.update("Customers", { id: "ALFKI", data: {ContactName: "Mock User" }, previousData: {}});
+  expect(fetchMock.mock.calls[1][0]).toEqual(Northwind + "/Customers('ALFKI')");
+  expect(fetchMock.mock.calls[1][1]?.method).toEqual("PATCH");
+  expect(fetchMock.mock.calls[1][1]?.body).toEqual(JSON.stringify({ContactName: "Mock User" }));
+});
+
+
 test("Get Order from Northwind by ID", async () => {
   const provider = await odataProvider(Northwind);
   await provider.getOne("Orders", { id: 10258 });
@@ -262,7 +271,7 @@ test("Custom fetch proxy", async () => {
         },
       });
 
-      let content: any;
+      let content;
       if (url.endsWith("/$metadata"))
         // metadata needs to be parsed as text
         content = await response.text();

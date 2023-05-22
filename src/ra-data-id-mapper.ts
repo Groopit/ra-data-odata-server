@@ -121,17 +121,13 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   };
 
   wrapper.update = (resource, params) => {
-    const id_name = id_map[resource.toLowerCase()];
-    if (id_name) {
-      console.log(`mapping id to ${id_name} for '${resource}`);
-    }
     return dataProvider.update(resource, params);
   };
 
   wrapper.updateMany = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
-      console.log(`mapping id to ${id_name} for '${resource}`);
+      console.log(`mapping id to ${id_name} for '${resource}'`);
     }
     return dataProvider.updateMany(resource, params);
   };
