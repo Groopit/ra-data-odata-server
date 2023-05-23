@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.1.0
+
+- Add list filter support, thanks again to @gebsl!
+- Update @odata/client to v2.21.6
+- Update npm dependencies
+
 ## v4.0.0
 
 - **BREAKING CHANGE** If you were returning the `headers` property in the options callback,
