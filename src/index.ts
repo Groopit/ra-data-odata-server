@@ -322,9 +322,9 @@ const ra_data_odata_server = async (
         const client = await getClient();
         const es = client.getEntitySet<RecordType>(resource);
 
-        const results = params.ids.map((id) => {
-          es.delete(getproperty_identifier(resource, keyName, id));
-        });
+        const results = params.ids.map((id) => 
+          es.delete(getproperty_identifier(resource, keyName, id))
+        );
 
         await Promise.all(results);
 
