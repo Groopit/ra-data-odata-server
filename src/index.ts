@@ -49,12 +49,12 @@ async function get_entities(
 export interface ActionParams {
   action: string;
   id: Identifier;
-  payload: any;
+  payload: unknown;
 }
 
 export type OdataDataProvider = DataProvider<string> & {
   getResources: () => string[];
-  action: (resource: string, params: ActionParams) => Promise<any>;
+  action: (resource: string, params: ActionParams) => Promise<unknown>;
 };
 
 const ra_data_odata_server = async (
@@ -265,7 +265,7 @@ const ra_data_odata_server = async (
         }
       },
 
-      update: async <RecordType extends RaRecord = any>(
+      update: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
         params: UpdateParams<RecordType>
       ) => {
@@ -285,10 +285,9 @@ const ra_data_odata_server = async (
         };
       },
 
-      updateMany: (resource, params) =>
-        Promise.reject(new Error("not implemented")),
+      updateMany: () => Promise.reject(new Error("not implemented")),
 
-      create: async <RecordType extends RaRecord = any>(
+      create: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
         params: CreateParams<RecordType>
       ) => {
@@ -300,7 +299,7 @@ const ra_data_odata_server = async (
         return { data: data };
       },
 
-      delete: async <RecordType extends RaRecord = any>(
+      delete: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
         params: DeleteParams
       ) => {
@@ -313,7 +312,7 @@ const ra_data_odata_server = async (
         return { data: { id: params.id } as RecordType };
       },
 
-      deleteMany: async <RecordType extends RaRecord = any>(
+      deleteMany: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
         params: DeleteManyParams
       ): Promise<DeleteManyResult> => {
@@ -332,8 +331,8 @@ const ra_data_odata_server = async (
       },
       action: async (
         resource: string,
-        params: { id: Identifier; action: string; payload: any }
-      ): Promise<any> => {
+        params: { id: Identifier; action: string; payload: unknown }
+      ): Promise<unknown> => {
         const res = resources[resource.toLowerCase()];
         const keyName = res?.Key?.Name ?? "UnknownKey";
         const client = await getClient();
