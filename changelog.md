@@ -1,5 +1,10 @@
 # Changelog
 
+## v4.2.0
+
+- Fix promise handling in deleteMany, thanks again to @gebsl!
+- Update npm dependencies
+
 ## v4.1.0
 
 - Add list filter support, thanks again to @gebsl!
