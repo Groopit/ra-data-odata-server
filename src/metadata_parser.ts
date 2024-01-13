@@ -1,4 +1,4 @@
-import Parser from "fast-xml-parser";
+import { XMLParser } from "fast-xml-parser";
 
 export interface EntityProperty {
   Name: string;
@@ -18,12 +18,14 @@ export interface EntitySet {
 }
 
 export function parse_metadata(t: string): Record<string, EntitySet> {
-  const metadata = Parser.parse(t, {
-    ignoreNameSpace: true,
+  const re = /Schema|EntityType|EntitySet/;
+  const parser = new XMLParser({
+    removeNSPrefix: true,
     attributeNamePrefix: "_",
     ignoreAttributes: false,
-    arrayMode: /Schema|EntityType|EntitySet/,
+    isArray: (tagName) => re.test(tagName),
   });
+  const metadata = parser.parse(t);
   const entities: Record<string, EntityType> = {};
   for (const schema of metadata.Edmx.DataServices.Schema) {
     const namespace = schema._Namespace;
