@@ -18,10 +18,11 @@ import {
   EdmV4,
   SystemQueryOptions,
   ODataNewOptions,
-  ODataFilter,
 } from "@odata/client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
+import { ArrayFilterExpressions } from './ArrayFilterExpressions';
+import { filterNameParser } from './filterNameParser';
 
 async function get_entities(
   url: string,
@@ -146,56 +147,124 @@ const ra_data_odata_server = async (
         const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
         const client = await getClient();
 
-        let p = new SystemQueryOptions()
+        const queryOptions = new SystemQueryOptions()
           .count()
           .orderby(field, order === "DESC" ? "desc" : "asc")
           .skip((page - 1) * perPage)
           .top(perPage);
 
-        let filter: ODataFilter | undefined = undefined;
-        for (const filterName in params.filter) {
-          const lastUnderscoreIndex = filterName.lastIndexOf("_");
-          // last part of split items tells us what kind
-          // of filter should be applied
-          // as described here: https://marmelab.com/react-admin/FilteringTutorial.html#filter-operators
-          const filterType = filterName.slice(lastUnderscoreIndex + 1);
-          const propName = filterName.slice(0, lastUnderscoreIndex);
-          const filterBuilder = client.newFilter().property(propName);
-          const filterValue = params.filter[filterName];
+        const oDataFilter = OData.newFilter();
+        const arrayFilterExpressions = new ArrayFilterExpressions();
 
-          switch (filterType) {
+        for (const filterName in params.filter) {
+          if (filterName === "q") {
+            queryOptions.search(params.filter[filterName], false);
+            continue;
+          }
+
+          const {
+            fieldName,
+            operator,
+          } = filterNameParser(filterName);
+          const filterBuilder = client.newFilter().property(fieldName);
+          const filterValue = params.filter[filterName];
+          let filterExpression: string;
+
+          switch (operator) {
+            case "q":
+              filterExpression = client
+                  .newFilter()
+                  .property(`Contains(${fieldName},'${filterValue}')`)
+                  .eq(true)
+                  .build();
+              break;
             case "neq":
-              filter = filterBuilder.ne(filterValue);
+              filterExpression = filterBuilder.ne(filterValue).build();
               break;
             case "eq":
-              filter = filterBuilder.eq(filterValue);
+              filterExpression = filterBuilder.eq(filterValue).build();
               break;
             case "lte":
-              filter = filterBuilder.le(filterValue);
+              filterExpression = filterBuilder.le(filterValue).build();
               break;
             case "lt":
-              filter = filterBuilder.lt(filterValue);
+              filterExpression = filterBuilder.lt(filterValue).build();
               break;
             case "gte":
-              filter = filterBuilder.ge(filterValue);
+              filterExpression = filterBuilder.ge(filterValue).build();
               break;
             case "gt":
-              filter = filterBuilder.gt(filterValue);
+              filterExpression = filterBuilder.gt(filterValue).build();
+              break;
+            case "eq_any":
+              filterExpression = filterBuilder.in(filterValue).build();
+              break;
+            case "neq_any":
+              filterExpression = `${filterBuilder.in(filterValue).build()} eq false`;
+              break;
+            case "boolean":
+              filterExpression = filterBuilder.eq(filterValue).build();
+              break;
+            case "inc":
+              filterExpression = filterValue
+                .map((value: any) => {
+                  if (typeof value === 'string') {
+                    return `(${fieldName} eq '${value}')`;
+                  }
+
+                  return `(${fieldName} eq ${value})`;
+                })
+                .join(' and ');
+              break;
+            case "inc_any":
+              filterExpression = filterValue
+                .map((value: any) => {
+                  if (typeof value === 'string') {
+                    return `(${fieldName} eq '${value}')`;
+                  }
+
+                  return `(${fieldName} eq ${value})`;
+                })
+                .join(' or ');
+              break;
+            case "ninc_any":
+              filterExpression = filterValue
+                .map((value: any) => {
+                  if (typeof value === 'string') {
+                    return `(${fieldName} ne '${value}')`;
+                  }
+
+                  return `(${fieldName} ne ${value})`;
+                })
+                .join(' and ');
               break;
             default:
               // this default filter was kept for compatibility reasons with
               // ra-data-odata-server@<=4.0.0
-              filter = client
-                .newFilter()
-                .property(`Contains(${filterName},'${filterValue}')`)
-                .eq(true);
+              filterExpression = client
+                  .newFilter()
+                  .property(`Contains(${filterName},'${filterValue}')`)
+                  .eq(true)
+                  .build();
+              console.warn(`Operator "${operator}" is not supported`);
+              break;
           }
 
-          p = p.filter(filter);
+          arrayFilterExpressions.add(filterExpression);
         }
+
+        const filtersSet = new Set([
+          arrayFilterExpressions.toString(),
+          oDataFilter.build(),
+        ]);
+        const uniqueFilters = Array.from(filtersSet);
+        const filtersString = uniqueFilters
+          .filter(Boolean)
+          .join(' and ');
+
         const resp = await client.newRequest<RecordType>({
           collection: resource,
-          params: p,
+          params: queryOptions.filter(filtersString),
         });
         if (resp.error) {
           return Promise.reject(
