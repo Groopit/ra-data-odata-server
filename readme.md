@@ -65,6 +65,19 @@ _lte| le | `filter: {price_lte: 0.99}`
 _lt| lt | `filter: {price_lt: 1}`
 _gte| ge | `filter: {price_gte: 1}`
 _gt| gt | `filter: {quantity_gt: 10}`
+_eq_any| in | `filter: {quantity_eq_any: [10, 20]}`
+_neq_any| not in | `filter: {quantity_neq_any: [10, 20]}`
+_inc| eq (AND) | `filter: {quantity_inc: [10, 20]}`
+_inc_any| eq (OR) | `filter: {quantity_inc_any: [10, 20]}`
+_ninc_any| ne (AND) | `filter: {quantity_ninc_any: [10, 20]}`
+_boolean| eq | `filter: {active_boolean: true}`
+_q| contains | `filter: {name_q: "John"}`
+
+If the filter field name is `q`, then it is converted to a search query:
+
+```
+filter: {q: "John"} -> $search=John
+```
 
 If a suffix operator is not supplied, then the default filter operator is `Contains` to search a field for a substring.
 
