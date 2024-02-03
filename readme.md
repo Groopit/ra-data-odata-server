@@ -99,6 +99,26 @@ Multiple filters can also be combined and used directly with the [`<List>`](http
 </List>
 ```
 
+### List Sorting
+
+The name of the field to be sorted is converted to a format that OData understands. For example, "category.name" will turn into "Category/Name".
+
+```ts
+<List resource="posts"
+    filter={{
+      author_eq: "John Smith",
+      published_at_gte: "2020-01-01T23:59:59.99Z"
+    }}>
+    <Datagrid rowClick="show">
+      <TextField source="id" />
+      <TextField source="title" />
+      <DateField source="published_at" />
+      <TextField source="category" sortBy="category.name" />
+      <BooleanField source="commentable" />
+    </Datagrid>
+</List>
+```
+
 ### OData Actions
 
 This provider has built-in support for invoking OData actions. This works with react-admin's

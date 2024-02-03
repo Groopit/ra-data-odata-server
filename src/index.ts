@@ -21,8 +21,9 @@ import {
 } from "@odata/client";
 import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
-import { ArrayFilterExpressions } from './ArrayFilterExpressions';
-import { filterNameParser } from './filterNameParser';
+import { ArrayFilterExpressions } from "./ArrayFilterExpressions";
+import { filterNameParser } from "./filterNameParser";
+import { getODataLikeKeyFormat } from "./helpers";
 
 async function get_entities(
   url: string,
@@ -149,7 +150,7 @@ const ra_data_odata_server = async (
 
         const queryOptions = new SystemQueryOptions()
           .count()
-          .orderby(field, order === "DESC" ? "desc" : "asc")
+          .orderby(getODataLikeKeyFormat(field), order === "DESC" ? "desc" : "asc")
           .skip((page - 1) * perPage)
           .top(perPage);
 
@@ -327,7 +328,7 @@ const ra_data_odata_server = async (
                 .property(params.target)
                 .eq(getproperty_identifier(resource, params.target, params.id))
             )
-            .orderby(field, order === "DESC" ? "desc" : "asc")
+            .orderby(getODataLikeKeyFormat(field), order === "DESC" ? "desc" : "asc")
             .skip((page - 1) * perPage)
             .top(perPage);
           return await getEntities<RecordType>(resource, odataParams);
