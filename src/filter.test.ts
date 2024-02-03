@@ -1,7 +1,7 @@
-import fs from "fs";
-import odataProvider from "./index";
+import * as fs from "fs";
 import { enableFetchMocks } from "jest-fetch-mock";
-import { ODataNewOptions } from "@odata/client";
+import odataProvider from "./index";
+
 enableFetchMocks();
 
 const Northwind = "https://services.odata.org/v4/Northwind/Northwind.svc";
@@ -44,7 +44,7 @@ test("filter q", async () => {
     fs.readFileSync("./test/service/Customers.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Customers", {
+  await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ContactName", order: "asc" },
     filter: { q: "Search string" },
@@ -65,7 +65,7 @@ test("filter_q", async () => {
     fs.readFileSync("./test/service/Customers.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Customers", {
+  await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ContactName", order: "asc" },
     filter: { ContactName_q: "Alejandra" },
@@ -86,7 +86,7 @@ test("filter_neq", async () => {
     fs.readFileSync("./test/service/Customers.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Customers", {
+  await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ContactName", order: "asc" },
     filter: { ContactName_neq: "Alejandra Camino" },
@@ -107,7 +107,7 @@ test("filter_eq", async () => {
     fs.readFileSync("./test/service/Customers.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Customers", {
+  await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ContactName", order: "asc" },
     filter: { ContactName_eq: "Alejandra Camino" },
@@ -128,7 +128,7 @@ test("filter_lte", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_lte: 10 },
@@ -149,7 +149,7 @@ test("filter_lt", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_lt: 10 },
@@ -170,7 +170,7 @@ test("filter_gte", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_gte: 10 },
@@ -191,7 +191,7 @@ test("filter_gt", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_gt: 10 },
@@ -212,7 +212,7 @@ test("filter_eq_any", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_eq_any: [10, 20], UnitPrice2_eq_any: [10, 20] },
@@ -233,7 +233,7 @@ test("filter_neq_any", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_neq_any: [10, 20] },
@@ -254,7 +254,7 @@ test("filter_boolean", async () => {
     fs.readFileSync("./test/service/Customers.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Customers", {
+  await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ContactName", order: "asc" },
     filter: { ContactName_boolean: true },
@@ -275,7 +275,7 @@ test("filter_inc", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_inc: [10, '20'] },
@@ -296,7 +296,7 @@ test("filter_inc_any", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_inc_any: [10, '20'] },
@@ -317,7 +317,7 @@ test("filter_ninc_any", async () => {
     fs.readFileSync("./test/service/Products.json").toString(),
     { headers: { "Content-Type": "application/json" } }
   );
-  const { data, total } = await provider.getList("Products", {
+  await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
     sort: { field: "ProductID", order: "asc" },
     filter: { UnitPrice_ninc_any: [10, '20'] },

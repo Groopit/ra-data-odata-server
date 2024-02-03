@@ -1,5 +1,5 @@
-import odataProvider from "./index";
 import fetchMock from "jest-fetch-mock";
+import odataProvider from "./index";
 
 fetchMock.dontMock();
 

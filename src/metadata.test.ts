@@ -1,5 +1,5 @@
+import * as fs from "fs";
 import { EntityProperty, parse_metadata } from "./metadata_parser";
-import fs from "fs";
 
 const nw = fs.readFileSync("./test/metadata/Northwind.metadata.xml").toString();
 
