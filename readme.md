@@ -119,6 +119,54 @@ The name of the field to be sorted is converted to a format that OData understan
 </List>
 ```
 
+### Select fields
+
+If the API provides more data than necessary, then you can request only those fields that are needed.
+
+```ts
+<ReferenceInput
+  source="user.id"
+  reference="users"
+  queryOptions={{
+    meta: {
+      select: ["firstName", "lastName", "fullName"]
+    }
+  }}
+  fullWidth
+  sort={{ field: "lastName", order: "ASC" }}
+  perPage={0}
+>
+  <AutocompleteInput
+    optionText="fullName"
+    filterToQuery={(q) => ({ q })}
+  />
+</ReferenceInput>
+```
+
+### Expand fields
+
+If an entity has nested fields, you can ask the API to include them in the response.
+
+```ts
+<ReferenceInput
+  source="company.id"
+  reference="companies"
+  queryOptions={{
+    meta: {
+      expand: ["city", "city.info", "city.info.company"]
+    }
+  }}
+  fullWidth
+  sort={{ field: "name", order: "ASC" }}
+  perPage={0}
+>
+  <AutocompleteInput
+    optionText="name"
+    filterToQuery={(q) => ({ q })}
+  />
+</ReferenceInput>
+```
+
 ### OData Actions
 
 This provider has built-in support for invoking OData actions. This works with react-admin's
