@@ -23,7 +23,19 @@ import { resource_id_mapper } from "./ra-data-id-mapper";
 import { parse_metadata } from "./metadata_parser";
 import { ArrayFilterExpressions } from "./ArrayFilterExpressions";
 import { filterNameParser } from "./filterNameParser";
-import { getODataLikeKeyFormat } from "./helpers";
+import {
+  capitalize,
+  getExpandString,
+  getODataLikeKeyFormat,
+} from "./helpers";
+
+interface GetListParamsWithTypedMeta extends GetListParams {
+  meta?: {
+    select?: string[];
+    expand?: string[];
+    [key: string]: any;
+  }
+}
 
 async function get_entities(
   url: string,
@@ -142,10 +154,11 @@ const ra_data_odata_server = async (
       getResources: () => Object.values(resources).map((r) => r.Name),
       getList: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
-        params: GetListParams
+        params: GetListParamsWithTypedMeta
       ) => {
         const { page, perPage } = params.pagination;
         const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
+        const { select = [], expand = [] } = params.meta as Required<GetListParamsWithTypedMeta>['meta'] || {};
         const client = await getClient();
 
         const queryOptions = new SystemQueryOptions()
@@ -153,6 +166,20 @@ const ra_data_odata_server = async (
           .orderby(getODataLikeKeyFormat(field), order === "DESC" ? "desc" : "asc")
           .skip((page - 1) * perPage)
           .top(perPage);
+
+        if (select.length > 0) {
+          const selectSet = new Set(select);
+          const uniqueSelectFields = Array.from(selectSet);
+
+          queryOptions.select(uniqueSelectFields.map(capitalize));
+        }
+
+        if (expand.length > 0) {
+          const expandSet = new Set(expand);
+          const uniqueExpandFields = Array.from(expandSet);
+
+          queryOptions.expand(uniqueExpandFields.map(getExpandString));
+        }
 
         const oDataFilter = OData.newFilter();
         const arrayFilterExpressions = new ArrayFilterExpressions();
