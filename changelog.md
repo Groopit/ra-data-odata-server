@@ -1,5 +1,10 @@
 # Changelog
 
+## v4.3.0
+
+- Add support for all react-admin filter operators thanks to @yarkovaleksei
+- Support for expand, select, and sort transformations, thanks to @yarkovaleksei
+
 ## v4.2.0
 
 - Fix promise handling in deleteMany, thanks again to @gebsl!
