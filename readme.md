@@ -65,6 +65,19 @@ _lte| le | `filter: {price_lte: 0.99}`
 _lt| lt | `filter: {price_lt: 1}`
 _gte| ge | `filter: {price_gte: 1}`
 _gt| gt | `filter: {quantity_gt: 10}`
+_eq_any| in | `filter: {quantity_eq_any: [10, 20]}`
+_neq_any| not in | `filter: {quantity_neq_any: [10, 20]}`
+_inc| eq (AND) | `filter: {quantity_inc: [10, 20]}`
+_inc_any| eq (OR) | `filter: {quantity_inc_any: [10, 20]}`
+_ninc_any| ne (AND) | `filter: {quantity_ninc_any: [10, 20]}`
+_boolean| eq | `filter: {active_boolean: true}`
+_q| contains | `filter: {name_q: "John"}`
+
+If the filter field name is `q`, then it is converted to a search query:
+
+```
+filter: {q: "John"} -> $search=John
+```
 
 If a suffix operator is not supplied, then the default filter operator is `Contains` to search a field for a substring.
 
@@ -84,6 +97,74 @@ Multiple filters can also be combined and used directly with the [`<List>`](http
       <BooleanField source="commentable" />
     </Datagrid>
 </List>
+```
+
+### List Sorting
+
+The name of the field to be sorted is converted to a format that OData understands. For example, "category.name" will turn into "Category/Name".
+
+```ts
+<List resource="posts"
+    filter={{
+      author_eq: "John Smith",
+      published_at_gte: "2020-01-01T23:59:59.99Z"
+    }}>
+    <Datagrid rowClick="show">
+      <TextField source="id" />
+      <TextField source="title" />
+      <DateField source="published_at" />
+      <TextField source="category" sortBy="category.name" />
+      <BooleanField source="commentable" />
+    </Datagrid>
+</List>
+```
+
+### Select fields
+
+If the API provides more data than necessary, then you can request only those fields that are needed.
+
+```ts
+<ReferenceInput
+  source="user.id"
+  reference="users"
+  queryOptions={{
+    meta: {
+      select: ["firstName", "lastName", "fullName"]
+    }
+  }}
+  fullWidth
+  sort={{ field: "lastName", order: "ASC" }}
+  perPage={0}
+>
+  <AutocompleteInput
+    optionText="fullName"
+    filterToQuery={(q) => ({ q })}
+  />
+</ReferenceInput>
+```
+
+### Expand fields
+
+If an entity has nested fields, you can ask the API to include them in the response.
+
+```ts
+<ReferenceInput
+  source="company.id"
+  reference="companies"
+  queryOptions={{
+    meta: {
+      expand: ["city", "city.info", "city.info.company"]
+    }
+  }}
+  fullWidth
+  sort={{ field: "name", order: "ASC" }}
+  perPage={0}
+>
+  <AutocompleteInput
+    optionText="name"
+    filterToQuery={(q) => ({ q })}
+  />
+</ReferenceInput>
 ```
 
 ### OData Actions

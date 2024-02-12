@@ -1,7 +1,8 @@
-import fs from "fs";
-import odataProvider from "./index";
+import * as fs from "fs";
 import { enableFetchMocks } from "jest-fetch-mock";
 import { ODataNewOptions } from "@odata/client";
+import odataProvider from "./index";
+
 enableFetchMocks();
 
 const Northwind = "https://services.odata.org/v4/Northwind/Northwind.svc";
