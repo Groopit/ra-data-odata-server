@@ -1,6 +1,6 @@
 {
   "name": "ra-data-odata-server",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "description": "OData Server data provider for react-admin",
   "repository": "https://github.com/Groopit/ra-data-odata-server",
   "main": "dist/index.js",
