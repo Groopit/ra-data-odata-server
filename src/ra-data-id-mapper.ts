@@ -21,7 +21,7 @@ const rename_to_id = <RecordType extends RaRecord = RaRecord>(
  * @param id_name the original name of the property, e.g. 'UserID'
  * @param object the object to be renamed, e.g. {id: "foo", Name: "John Smith"}
  */
-const rename_from_id = (id_name: string, object: RaRecord) => {
+const rename_from_id = (id_name: string, object: Partial<RaRecord>) => {
   const renamed: Omit<RaRecord, "id"> = { [id_name]: object.id, ...object };
   delete renamed.id;
   return renamed;
@@ -65,7 +65,7 @@ export function resource_id_mapper<ProviderType extends DataProvider>(
   wrapper.getList = (resource, params) => {
     const id_name = id_map[resource.toLowerCase()];
     if (id_name) {
-      if (params.sort.field === "id") {
+      if (params.sort?.field === "id") {
         params.sort.field = id_name;
       }
       return dataProvider.getList(resource, params).then((result) => {

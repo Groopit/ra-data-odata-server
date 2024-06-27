@@ -10,6 +10,7 @@ import {
   GetOneParams,
   HttpError,
   Identifier,
+  QueryFunctionContext,
   RaRecord,
   UpdateParams,
 } from "ra-core";
@@ -154,18 +155,21 @@ const ra_data_odata_server = async (
       getResources: () => Object.values(resources).map((r) => r.Name),
       getList: async <RecordType extends RaRecord = RaRecord>(
         resource: string,
-        params: GetListParamsWithTypedMeta
+        params: GetListParamsWithTypedMeta & QueryFunctionContext
       ) => {
-        const { page, perPage } = params.pagination;
-        const { field, order } = params.sort; // order is either 'DESC' or 'ASC'
+        const { page, perPage } = params.pagination ||{};
+        const { field, order } = params.sort ||{}; // order is either 'DESC' or 'ASC'
         const { select = [], expand = [] } = params.meta as Required<GetListParamsWithTypedMeta>['meta'] || {};
         const client = await getClient();
 
-        const queryOptions = new SystemQueryOptions()
+        
+        const queryOptions =
+          (field && page &&perPage) ? new SystemQueryOptions()
           .count()
           .orderby(getODataLikeKeyFormat(field), order === "DESC" ? "desc" : "asc")
           .skip((page - 1) * perPage)
-          .top(perPage);
+          .top(perPage)
+        : new SystemQueryOptions();
 
         if (select.length > 0) {
           const selectSet = new Set(select);
