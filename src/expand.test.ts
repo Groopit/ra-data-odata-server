@@ -46,7 +46,7 @@ test('expand fields ["company", "city", "city.info", "city.info.company"]', asyn
   );
   await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "country.name", order: "asc" },
+    sort: { field: "country.name", order: "ASC" },
     filter: {},
     meta: {
       expand: ["company", "city", "city.info", "city.info.company"],

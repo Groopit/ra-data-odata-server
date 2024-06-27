@@ -46,7 +46,7 @@ test("filter q", async () => {
   );
   await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ContactName", order: "asc" },
+    sort: { field: "ContactName", order: "ASC" },
     filter: { q: "Search string" },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -67,7 +67,7 @@ test("filter_q", async () => {
   );
   await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ContactName", order: "asc" },
+    sort: { field: "ContactName", order: "ASC" },
     filter: { ContactName_q: "Alejandra" },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -88,7 +88,7 @@ test("filter_neq", async () => {
   );
   await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ContactName", order: "asc" },
+    sort: { field: "ContactName", order: "ASC" },
     filter: { ContactName_neq: "Alejandra Camino" },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -109,7 +109,7 @@ test("filter_eq", async () => {
   );
   await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ContactName", order: "asc" },
+    sort: { field: "ContactName", order: "ASC" },
     filter: { ContactName_eq: "Alejandra Camino" },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -130,7 +130,7 @@ test("filter_lte", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_lte: 10 },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -151,7 +151,7 @@ test("filter_lt", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_lt: 10 },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -172,7 +172,7 @@ test("filter_gte", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_gte: 10 },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -193,7 +193,7 @@ test("filter_gt", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_gt: 10 },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -214,7 +214,7 @@ test("filter_eq_any", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_eq_any: [10, 20], UnitPrice2_eq_any: [10, 20] },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -235,7 +235,7 @@ test("filter_neq_any", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_neq_any: [10, 20] },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -256,7 +256,7 @@ test("filter_boolean", async () => {
   );
   await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ContactName", order: "asc" },
+    sort: { field: "ContactName", order: "ASC" },
     filter: { ContactName_boolean: true },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -277,7 +277,7 @@ test("filter_inc", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_inc: [10, '20'] },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -298,7 +298,7 @@ test("filter_inc_any", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_inc_any: [10, '20'] },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -319,7 +319,7 @@ test("filter_ninc_any", async () => {
   );
   await provider.getList("Products", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ProductID", order: "asc" },
+    sort: { field: "ProductID", order: "ASC" },
     filter: { UnitPrice_ninc_any: [10, '20'] },
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(

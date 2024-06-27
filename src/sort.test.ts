@@ -46,7 +46,7 @@ test('sort by "country.name" field', async () => {
   );
   await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "country.name", order: "asc" },
+    sort: { field: "country.name", order: "ASC" },
     filter: {},
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(

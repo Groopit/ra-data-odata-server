@@ -110,7 +110,7 @@ test("Get Customer list from Northwind", async () => {
   );
   const { data, total } = await provider.getList("Customers", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "ContactName", order: "asc" },
+    sort: { field: "ContactName", order: "ASC" },
     filter: null,
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -142,7 +142,7 @@ test("Get Category list from Northwind", async () => {
   );
   const { data, total } = await provider.getList("Categories", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "CategoryID", order: "asc" },
+    sort: { field: "CategoryID", order: "ASC" },
     filter: null,
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
@@ -294,7 +294,7 @@ test("Custom fetch proxy", async () => {
   );
   const { data } = await provider.getList("Categories", {
     pagination: { page: 1, perPage: 15 },
-    sort: { field: "CategoryID", order: "asc" },
+    sort: { field: "CategoryID", order: "ASC" },
     filter: null,
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
