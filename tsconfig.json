@@ -3,7 +3,8 @@
   "compilerOptions": {
     "lib": ["DOM", "ES2018"],
     "allowJs": false,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "strictNullChecks": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
