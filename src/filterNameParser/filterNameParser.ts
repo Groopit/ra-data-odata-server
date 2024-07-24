@@ -2,6 +2,7 @@ import { getODataLikeKeyFormat } from "../helpers";
 
 export type Operator =
 "q"
+| "q_int"
 | "neq"
 | "eq"
 | "lte"
@@ -17,6 +18,7 @@ export type Operator =
 
 export const operators: Operator[] = [
   "q",
+  "q_int",
   "neq",
   "eq",
   "lte",

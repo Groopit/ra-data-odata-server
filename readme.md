@@ -2,6 +2,12 @@
 
 OData Data Provider for [react-admin](https://github.com/marmelab/react-admin), the frontend framework for building admin applications in the browser.
 
+This version is a fork of the original version made suitable for React-admin version 5.
+
+## Changes
+
+- add q_int filter to search for a numeric column containing some numbers 
+
 ## Features
 
 - Parses OData $metadata and creates a list of EntitySets which can be displayed as react-admin \<Resources\>
@@ -72,6 +78,7 @@ _inc_any| eq (OR) | `filter: {quantity_inc_any: [10, 20]}`
 _ninc_any| ne (AND) | `filter: {quantity_ninc_any: [10, 20]}`
 _boolean| eq | `filter: {active_boolean: true}`
 _q| contains | `filter: {name_q: "John"}`
+_q_int | contains (int) | `filter: {number_q_int: "123"}`
 
 If the filter field name is `q`, then it is converted to a search query:
 

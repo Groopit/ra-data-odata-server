@@ -210,6 +210,13 @@ const ra_data_odata_server = async (
                   .eq(true)
                   .build();
               break;
+            case "q_int":
+              filterExpression = client
+                  .newFilter()
+                  .property(`Contains(Cast(${fieldName},'Edm.String'),'${filterValue}')`)
+                  .eq(true)
+                  .build();
+              break;
             case "neq":
               filterExpression = filterBuilder.ne(filterValue).build();
               break;
