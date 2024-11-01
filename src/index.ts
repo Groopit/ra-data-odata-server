@@ -256,15 +256,15 @@ const ra_data_odata_server = async (
                 .join(' and ');
               break;
             case "inc_any":
-              filterExpression = `${fieldName} in ( ${filterValue
+              filterExpression = `( ${filterValue
                 .map((value: any) => {
                   if (typeof value === 'string') {
-                    return `'${value}'`;
+                    return `(${fieldName} eq '${value}')`;
                   }
 
-                  return `${value}`;
+                  return `(${fieldName} eq ${value})`;
                 })
-                .join(',')} )`;
+                .join(' or ')} ) eq true`;
               break;
             case "ninc_any":
               filterExpression = filterValue
