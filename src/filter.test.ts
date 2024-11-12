@@ -303,7 +303,7 @@ test("filter_inc_any", async () => {
   });
   expect(fetchMock.mock.calls[1][0]).toEqual(
     Northwind +
-      "/Products?$filter=(UnitPrice eq 10) or (UnitPrice eq '20')&$orderby=ProductID asc&$top=15&$count=true"
+      "/Products?$filter=( (UnitPrice eq 10) or (UnitPrice eq '20') ) eq true&$orderby=ProductID asc&$top=15&$count=true"
   );
   expect(fetchMock.mock.calls[1][1]?.method).toEqual("GET");
 });
