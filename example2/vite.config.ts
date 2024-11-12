@@ -1,6 +1,6 @@
 import {defineConfig} from 'vite'
 import react from '@vitejs/plugin-react'
-
+import path from 'path';
 // https://vitejs.dev/config/
 export default defineConfig({
     server: {
@@ -13,7 +13,7 @@ export default defineConfig({
         }
     },
     resolve: {
-        alias: {"ra-data-odata-server": "/Users/remcoblumink/RiderProjects/ra-data-odata-server/dist"}
+        alias: {"ra-data-odata-server": path.resolve(__dirname,"../dist")}
     },
     plugins: [react()],
 })

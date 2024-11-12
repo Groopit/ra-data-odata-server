@@ -1,5 +1,5 @@
 {
-  "name": "@4efficiency/ra-data-odata-server",
+  "name": "ra-data-odata-server",
   "version": "4.3.4",
   "description": "OData Server data provider for react-admin",
   "repository": "https://github.com/Groopit/ra-data-odata-server",

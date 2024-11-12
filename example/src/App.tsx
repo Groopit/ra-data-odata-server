@@ -8,7 +8,7 @@ import {
   ShowGuesser,
 } from "react-admin";
 import "./App.css";
-import odataProvider, { OdataDataProvider } from "@4efficiency/ra-data-odata-server";
+import odataProvider, { OdataDataProvider } from "ra-data-odata-server";
 import { useEffect, useState } from "react";
 
 const Northwind = "/V4/Northwind/Northwind.svc";

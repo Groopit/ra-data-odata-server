@@ -13,7 +13,7 @@
     "react": "^18.3.1",
     "react-admin": "^5.0.4",
     "react-dom": "^18.3.1",
-    "@4efficiency/ra-data-odata-server": "file:../"
+    "ra-data-odata-server":"file:../"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
