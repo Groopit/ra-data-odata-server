@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.0.0
+
+- Major version number update due to supporting (and requiring) react-admin 5.* thanks to @RemcoEF4.
+- Add support for vite and an example project thanks to @RemcoEF4
+- Add _q_int filter operator to search for numbers containing digits thanks to @RemcoEF4
+- Fix inc_any filter when used in combination with another filter thanks to @RemcoEF4
+- Update npm dependencies
+
 ## v4.3.0
 
 - Add support for all react-admin filter operators thanks to @yarkovaleksei

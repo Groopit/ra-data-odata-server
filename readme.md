@@ -2,12 +2,6 @@
 
 OData Data Provider for [react-admin](https://github.com/marmelab/react-admin), the frontend framework for building admin applications in the browser.
 
-This version is a fork of the original version made suitable for React-admin version 5.
-
-## Changes
-
-- add q_int filter to search for a numeric column containing some numbers 
-
 ## Features
 
 - Parses OData $metadata and creates a list of EntitySets which can be displayed as react-admin \<Resources\>
