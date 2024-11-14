@@ -3,8 +3,13 @@ import {
   operators,
 } from "./filterNameParser";
 
-test("Thrown error if filter name doesn't contain an operator", () => {
-  expect(() => filterNameParser("filterName")).toThrow(Error);
+test("Default to 'q' if filter name doesn't contain an operator", () => {
+  const {
+    fieldName: parsedFieldName,
+    operator: parsedOperator,
+  } = filterNameParser(`filterName`);
+  expect(parsedFieldName).toEqual("FilterName");
+  expect(parsedOperator).toEqual("q");
 });
 
 operators.forEach((operator) => {

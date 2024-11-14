@@ -6,6 +6,7 @@
 - Add support for vite and an example project thanks to @RemcoEF4
 - Add _q_int filter operator to search for numbers containing digits thanks to @RemcoEF4
 - Fix inc_any filter when used in combination with another filter thanks to @RemcoEF4
+- Filtering on getList() defaults to 'q' if an operator was not explicitly specified
 - Update npm dependencies
 
 ## v4.3.0

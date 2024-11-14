@@ -78,6 +78,27 @@ test("filter_q", async () => {
 });
 
 //
+// Jest test to verify that if there is no operator it defaults to "q"
+//
+test("filter_q", async () => {
+  const provider = await odataProvider(Northwind);
+  fetchMock.mockOnce(
+    fs.readFileSync("./test/service/Customers.json").toString(),
+    { headers: { "Content-Type": "application/json" } }
+  );
+  await provider.getList("Customers", {
+    pagination: { page: 1, perPage: 15 },
+    sort: { field: "ContactName", order: "ASC" },
+    filter: { ContactName: "Alejandra" },
+  });
+  expect(fetchMock.mock.calls[1][0]).toEqual(
+    Northwind +
+      "/Customers?$filter=Contains(ContactName,'Alejandra') eq true&$orderby=ContactName asc&$top=15&$count=true"
+  );
+  expect(fetchMock.mock.calls[1][1]?.method).toEqual("GET");
+});
+
+//
 // Jest test to verify the _neq filter functionality
 //
 test("filter_neq", async () => {

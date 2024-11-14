@@ -53,7 +53,18 @@ export function filterNameParser(filterName: string): FilterNameParserResult {
   const containsOperator = operators.some((operator) => filterName.endsWith(operator));
 
   if (!containsOperator) {
-    throw new Error(`Field name "${filterName}" must contain an operator: ${operators.join(", ")}`);
+    //
+    // Standard react-admin <Filter> components should default to the "q" operator
+    // if no operator is specified in the filter name. This enables usage like
+    //   <Filter>
+    //     <TextInput label="Name" source="Name" alwaysOn />
+    //     <TextInput label="Email" source="Email" alwaysOn />
+    //   </Filter>
+    //
+    return {
+      fieldName: getODataLikeKeyFormat(filterName),
+      operator: "q",
+    };
   }
 
   let fieldName: string | null = null;
